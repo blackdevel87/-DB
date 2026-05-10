@@ -219,7 +219,7 @@
       <nav class="menu">
         <button class="active" onclick="showPage('home', this)">🏠 홈</button>
         <button onclick="showPage('notice', this)">📢 공지사항</button>
-        <button onclick="showPage('attendance', this)">⚔️ 출결전</button>
+        <button onclick="showPage('totalWar', this)">⚔️ 총력전</button>
         <button onclick="showPage('deckBuild', this)">🧩 길드전 덱편성</button>
         <button onclick="showPage('todayWar', this)">📅 오늘의 길드전</button>
         <button onclick="showPage('attack', this)">🗡️ 길드전 공격</button>
@@ -274,15 +274,46 @@
         </div>
       </section>
 
-      <section id="attendance" class="content">
-        <h3>⚔️ 출결전</h3>
-        <div class="form">
-          <input id="attName" placeholder="닉네임" />
-          <select id="attStatus"><option>참여 완료</option><option>미참여</option><option>사정 있음</option></select>
-          <textarea id="attMemo" placeholder="메모"></textarea>
-          <button onclick="addAttendance()">출결 등록</button>
+      <section id="totalWar" class="content">
+        <h3>⚔️ 총력전</h3>
+
+        <div class="list" style="margin-bottom:16px;">
+          <div class="item">
+            <strong>💡 사용법</strong>
+            <p>
+              난이도를 선택하고, 팀별 전열/후열 캐릭터와 펫 정보를 기록하세요.<br />
+              현재는 내 브라우저에서만 보이는 기본형입니다. 다음 단계에서 Firebase를 연결하면 길드원 전체 공유가 가능합니다.
+            </p>
+          </div>
         </div>
-        <div id="attendanceList" class="result"></div>
+
+        <div class="quick-grid">
+          <div class="card" onclick="setTotalLevel('일반')"><div class="icon">🌱</div><h4>일반</h4><p>기본 난이도 / 2팀 기준</p></div>
+          <div class="card" onclick="setTotalLevel('고급')"><div class="icon">💧</div><h4>고급</h4><p>3팀 편성 기준</p></div>
+          <div class="card" onclick="setTotalLevel('희귀')"><div class="icon">💚</div><h4>희귀</h4><p>4팀 편성 기준</p></div>
+        </div>
+
+        <div class="quick-grid">
+          <div class="card" onclick="setTotalLevel('전설')"><div class="icon">💖</div><h4>전설</h4><p>5팀 편성 기준</p></div>
+          <div class="card"><div class="icon">🔗</div><h4>공유 편성</h4><p>추후 길드원 추천 편성을 모아볼 수 있습니다.</p></div>
+          <div class="card"><div class="icon">🔒</div><h4>잠금 슬롯</h4><p>난이도에 따라 팀 슬롯을 확장할 수 있습니다.</p></div>
+        </div>
+
+        <div class="hero">
+          <h3 id="totalLevelTitle">선택 난이도: 일반</h3>
+          <p>팀 편성 정보를 입력하고 아래에 기록을 추가해보세요.</p>
+        </div>
+
+        <div class="form">
+          <input id="totalTeam" placeholder="팀 번호 예: 1팀" />
+          <input id="frontLine" placeholder="전열 캐릭터 예: 캐릭터A / 캐릭터B / 캐릭터C" />
+          <input id="backLine" placeholder="후열 캐릭터 예: 캐릭터D / 캐릭터E" />
+          <input id="petInfo" placeholder="펫 정보 예: 펫 이름 / 스킬 / 특성" />
+          <textarea id="totalMemo" placeholder="운영법, 주의사항, 대체 캐릭터, 추천 장비 등을 적어주세요."></textarea>
+          <button onclick="addTotalWar()">총력전 편성 등록</button>
+        </div>
+
+        <div id="totalWarList" class="result"></div>
       </section>
 
       <section id="deckBuild" class="content">
@@ -398,12 +429,19 @@
       wrap.prepend(item);
     }
 
-    function addAttendance() {
-      const name = document.getElementById("attName").value.trim() || "익명";
-      const status = document.getElementById("attStatus").value;
-      const memo = document.getElementById("attMemo").value.trim() || "메모 없음";
-      addCard("attendanceList", `${name} · ${status}`, memo);
-      document.getElementById("attMemo").value = "";
+    function setTotalLevel(level) {
+      document.getElementById("totalLevelTitle").textContent = "선택 난이도: " + level;
+    }
+
+    function addTotalWar() {
+      const level = document.getElementById("totalLevelTitle").textContent.replace("선택 난이도: ", "");
+      const team = document.getElementById("totalTeam").value.trim() || "팀 미입력";
+      const front = document.getElementById("frontLine").value.trim() || "전열 미입력";
+      const back = document.getElementById("backLine").value.trim() || "후열 미입력";
+      const pet = document.getElementById("petInfo").value.trim() || "펫 정보 없음";
+      const memo = document.getElementById("totalMemo").value.trim() || "메모 없음";
+      addCard("totalWarList", `${level} · ${team}`, `전열: ${front}<br>후열: ${back}<br>펫: ${pet}<br><br>${memo}`);
+      document.getElementById("totalMemo").value = "";
     }
 
     function addTodayWar() {
