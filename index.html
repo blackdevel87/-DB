@@ -303,12 +303,15 @@ textarea{
 <div class="card">
     <h2>📢 공지사항</h2>
 
-    <div style="background:#374151; padding:15px; border-radius:12px; margin-top:15px;">
-        <strong>오늘의 공지</strong>
-        <p style="margin-top:8px; color:#d1d5db;">
-            오늘 저녁 9시 길드전 진행 예정입니다.
-        </p>
-    </div>
+    <div
+    id="noticeList"
+    style="
+        display:flex;
+        flex-direction:column;
+        gap:12px;
+        margin-top:15px;
+    "
+></div>
 </div>
 
 
@@ -319,15 +322,16 @@ textarea{
             <h2>👑 관리자 전용 수정창</h2>
 
             <input
-                type="text"
-                placeholder="공지 제목"
-            />
+    id="noticeTitle"
+    type="text"
+    placeholder="공지 제목"
+/>
 
-            <textarea
-                placeholder="공지 내용을 입력하세요"
-            ></textarea>
-
-            <button class="save-btn">
+<textarea
+    id="noticeContent"
+    placeholder="공지 내용을 입력하세요"
+></textarea>
+            <button class="save-btn" onclick="saveNotice()">
                 저장하기
             </button>
 
@@ -420,7 +424,14 @@ import {
     getFirestore,
     doc,
     setDoc,
-    getDoc
+    getDoc,
+    collection,
+    addDoc,
+    getDocs,
+    query,
+    orderBy,
+    limit,
+    serverTimestamp
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -837,9 +848,79 @@ function renderUserList(){
 
 
 // ======================
+window.saveNotice = async function(){
 
+    if(currentRole !== "admin"){
+        alert("관리자만 공지 등록이 가능합니다.");
+        return;
+    }
+
+    const title = document.getElementById("noticeTitle").value.trim();
+    const content = document.getElementById("noticeContent").value.trim();
+
+    if(!title || !content){
+        alert("공지 제목과 내용을 모두 입력해주세요.");
+        return;
+    }
+
+    await addDoc(collection(db, "notices"), {
+        title: title,
+        content: content,
+        writer: currentUser,
+        createdAt: serverTimestamp()
+    });
+
+    document.getElementById("noticeTitle").value = "";
+    document.getElementById("noticeContent").value = "";
+
+    alert("공지사항이 등록되었습니다.");
+
+};
+    window.loadNotices = async function(){
+
+    const noticeList = document.getElementById("noticeList");
+
+    noticeList.innerHTML = "";
+
+    const q = query(
+        collection(db, "notices"),
+        orderBy("createdAt", "desc"),
+        limit(3)
+    );
+
+    const querySnapshot = await getDocs(q);
+
+    querySnapshot.forEach((docItem) => {
+
+        const notice = docItem.data();
+
+        const createdDate =
+            notice.createdAt?.toDate?.().toLocaleDateString()
+            || "날짜 없음";
+
+        const div = document.createElement("div");
+
+        div.style.background = "#374151";
+        div.style.padding = "15px";
+        div.style.borderRadius = "12px";
+
+        div.innerHTML = `
+            <strong>${notice.title}</strong>
+            <div style="font-size:12px; color:#9ca3af; margin-top:4px;">
+                ${createdDate}
+            </div>
+            <p style="margin-top:8px; color:#d1d5db;">
+                ${notice.content}
+            </p>
+        `;
+
+        noticeList.appendChild(div);
+
+    });
+
+};
 await loadUsers();
-
+await loadNotices();
 </script>
 
 </body>
