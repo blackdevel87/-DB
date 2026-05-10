@@ -1,679 +1,268 @@
+# index.html 전체 교체용 예시 코드
+
+```html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>티니핑 길드 DB</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>티니핑 길드 DB</title>
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      min-height: 100vh;
-      color: #fff;
-      background:
-        radial-gradient(circle at 20% 10%, rgba(255, 196, 230, 0.45), transparent 25%),
-        radial-gradient(circle at 80% 0%, rgba(176, 220, 255, 0.38), transparent 28%),
-        linear-gradient(135deg, #21102f 0%, #421a4c 45%, #1c1230 100%);
-    }
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-    .layout { display: flex; min-height: 100vh; }
+body {
+    font-family: Arial, sans-serif;
+    background: #111827;
+    color: white;
+}
 
-    .sidebar {
-      width: 250px;
-      background: rgba(35, 12, 38, 0.88);
-      border-right: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 24px 18px;
-      position: sticky;
-      top: 0;
-      height: 100vh;
-    }
+.login-screen {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
 
-    .brand {
-      padding: 12px 10px 26px;
-      border-bottom: 1px solid rgba(255,255,255,.1);
-      margin-bottom: 16px;
-    }
+.login-box {
+    width: 320px;
+    background: #1f2937;
+    padding: 30px;
+    border-radius: 16px;
+    text-align: center;
+}
 
-    .brand .logo { font-size: 34px; margin-bottom: 8px; }
-    .brand h1 { font-size: 22px; color: #ffb8e6; }
-    .brand p { font-size: 12px; color: #d9c5ef; letter-spacing: 2px; margin-top: 4px; }
+.login-box h1 {
+    margin-bottom: 20px;
+}
 
-    .menu { display: grid; gap: 8px; }
-    .menu button {
-      width: 100%;
-      text-align: left;
-      padding: 13px 14px;
-      border: 1px solid transparent;
-      border-radius: 14px;
-      background: transparent;
-      color: #f4eaff;
-      cursor: pointer;
-      font-weight: 700;
-      transition: .18s;
-    }
+.login-box input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 8px;
+}
 
-    .menu button:hover, .menu button.active {
-      background: linear-gradient(135deg, rgba(255, 111, 196, .34), rgba(132, 184, 255, .22));
-      border-color: rgba(255, 184, 230, .45);
-      transform: translateX(3px);
-    }
+.login-box button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+}
 
-    .user-bottom {
-      position: absolute;
-      left: 18px;
-      right: 18px;
-      bottom: 18px;
-      padding: 14px;
-      border-radius: 18px;
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.12);
-      color: #ffd6ef;
-      font-size: 13px;
-    }
+.layout {
+    display: flex;
+    min-height: 100vh;
+}
 
-    .main { flex: 1; padding: 36px; max-width: 1180px; margin: 0 auto; }
+.sidebar {
+    width: 250px;
+    background: #1f2937;
+    padding: 20px;
+}
 
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 28px;
-    }
+.sidebar h1 {
+    margin-bottom: 10px;
+}
 
-    .title-mini { color: #ffc4eb; font-weight: 800; margin-bottom: 8px; }
-    .topbar h2 { font-size: 34px; letter-spacing: -1px; }
-    .topbar p { color: #e8d7f4; margin-top: 8px; }
+.sidebar p {
+    color: #9ca3af;
+    margin-bottom: 20px;
+}
 
-    .login-box {
-      display: flex;
-      gap: 8px;
-      padding: 10px;
-      border-radius: 18px;
-      background: rgba(255,255,255,.1);
-      border: 1px solid rgba(255,255,255,.16);
-    }
+.menu button {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: #374151;
+    color: white;
+    cursor: pointer;
+}
 
-    input, textarea, select {
-      width: 100%;
-      border: 1px solid rgba(255,255,255,.16);
-      border-radius: 14px;
-      background: rgba(0,0,0,.24);
-      color: #fff;
-      padding: 13px;
-      outline: none;
-    }
+.main {
+    flex: 1;
+    padding: 30px;
+}
 
-    input::placeholder, textarea::placeholder { color: #bda8cc; }
-    textarea { min-height: 110px; resize: vertical; }
+.card {
+    background: #1f2937;
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+}
 
-    .login-box input { width: 145px; }
+.admin-only {
+    display: none;
+}
 
-    .primary-btn, .login-box button, .form button {
-      border: none;
-      border-radius: 14px;
-      padding: 12px 16px;
-      color: #fff;
-      font-weight: 900;
-      cursor: pointer;
-      background: linear-gradient(135deg, #ff6fc4, #8db8ff);
-      box-shadow: 0 10px 24px rgba(255, 111, 196, .22);
-    }
+.admin-mode .admin-only {
+    display: block;
+}
 
-    .hero {
-      padding: 30px;
-      border-radius: 28px;
-      background: linear-gradient(135deg, rgba(255, 133, 210, .25), rgba(141, 184, 255, .18));
-      border: 1px solid rgba(255,255,255,.16);
-      box-shadow: 0 24px 70px rgba(0,0,0,.26);
-      margin-bottom: 26px;
-    }
+input, textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: none;
+}
 
-    .hero h3 { font-size: 28px; margin-bottom: 10px; }
-    .hero p { color: #f3e8ff; line-height: 1.7; }
+textarea {
+    min-height: 120px;
+}
 
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-      margin-bottom: 26px;
-    }
-
-    .stat, .card, .content {
-      border-radius: 24px;
-      background: rgba(255,255,255,.09);
-      border: 1px solid rgba(255,255,255,.14);
-      box-shadow: 0 16px 50px rgba(0,0,0,.18);
-    }
-
-    .stat { padding: 20px; }
-    .stat small { color: #ffb8e6; font-weight: 800; }
-    .stat strong { display: block; font-size: 28px; margin-top: 8px; }
-    .stat span { color: #d8c7ef; font-size: 13px; }
-
-    .quick-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-bottom: 26px;
-    }
-
-    .card {
-      padding: 24px;
-      cursor: pointer;
-      transition: .18s;
-      min-height: 130px;
-    }
-
-    .card:hover { transform: translateY(-4px); background: rgba(255,255,255,.13); }
-    .card .icon { font-size: 32px; margin-bottom: 12px; }
-    .card h4 { font-size: 18px; margin-bottom: 7px; }
-    .card p { color: #d7c6ed; font-size: 14px; line-height: 1.55; }
-
-    .content { display: none; padding: 26px; margin-bottom: 26px; }
-    .content.active { display: block; }
-    .content h3 { font-size: 26px; margin-bottom: 18px; color: #ffd6ef; }
-
-    .list { display: grid; gap: 12px; }
-    .item {
-      padding: 17px;
-      border-radius: 18px;
-      background: rgba(0,0,0,.22);
-      border: 1px solid rgba(255,255,255,.1);
-    }
-    .item strong { display: block; margin-bottom: 7px; }
-    .item p, .item span { color: #e1d2ef; line-height: 1.6; font-size: 14px; }
-
-    .form { display: grid; gap: 12px; max-width: 680px; }
-    .result { margin-top: 16px; display: grid; gap: 12px; }
-
-    .rank-table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 18px; }
-    .rank-table th, .rank-table td { padding: 14px; border-bottom: 1px solid rgba(255,255,255,.1); text-align: left; }
-    .rank-table th { color: #ffb8e6; background: rgba(255,255,255,.07); }
-    .rank-table td { color: #f2e7ff; }
-
-    footer { text-align: center; color: #cbb8df; font-size: 13px; padding: 26px 0; }
-
-    @media (max-width: 900px) {
-      .layout { display: block; }
-      .sidebar { width: 100%; height: auto; position: relative; }
-      .user-bottom { position: static; margin-top: 16px; }
-      .menu { grid-template-columns: repeat(2, 1fr); }
-      .main { padding: 22px; }
-      .topbar { flex-direction: column; align-items: stretch; }
-      .stats, .quick-grid { grid-template-columns: 1fr; }
-      .login-box input { width: 100%; }
-    }
-  </style>
+.save-btn {
+    margin-top: 10px;
+    background: #dc2626;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+</style>
 </head>
+
 <body>
-  <div class="layout">
+
+<!-- 로그인 화면 -->
+<div id="loginScreen" class="login-screen">
+    <div class="login-box">
+        <h1>🎀 티니핑 길드 DB</h1>
+
+        <input type="text" id="loginId" placeholder="아이디 입력" />
+        <input type="password" id="loginCode" placeholder="코드 입력" />
+
+        <button onclick="login()">접속하기</button>
+
+        <p id="loginMessage" style="margin-top:10px;color:#f87171;"></p>
+    </div>
+</div>
+
+<div class="layout">
+
     <aside class="sidebar">
-      <div class="brand">
-        <div class="logo">💖</div>
         <h1>티니핑 길드 DB</h1>
-        <p>TINYPING GUILD</p>
-      </div>
+        <p id="roleName">👤 길드원</p>
 
-      <nav class="menu">
-        <button class="active" onclick="showPage('home', this)">🏠 홈</button>
-        <button onclick="showPage('notice', this)">📢 공지사항</button>
-        <button onclick="showPage('totalWar', this)">⚔️ 총력전</button>
-        <button onclick="showPage('deckBuild', this)">🧩 길드전 덱편성</button>
-        <button onclick="showPage('todayWar', this)">📅 오늘의 길드전</button>
-        <button onclick="showPage('attack', this)">🗡️ 길드전 공격</button>
-        <button onclick="showPage('defense', this)">🛡️ 추천 방어</button>
-        <button onclick="showPage('pve', this)">🏰 PVE 공략</button>
-        <button onclick="showPage('ranking', this)">🏆 랭킹</button>
-        <button onclick="showPage('suggest', this)">💌 건의사항</button>
-      </nav>
-
-      <div class="user-bottom">
-        접속 중: <b id="sideName">게스트</b><br />
-        권한: <b id="roleName">일반 길드원</b>
-      </div>
+        <div class="menu">
+            <button>🏠 홈</button>
+            <button>📢 공지</button>
+            <button>⚔ 덱 정보</button>
+            <button>📊 랭킹</button>
+        </div>
     </aside>
 
     <main class="main">
-      <div class="topbar">
-        <div>
-          <div class="title-mini">💖 티니핑 길드에 오신 걸 환영합니다</div>
-          <h2 id="welcomeTitle">안녕하세요, 길드원님 👋</h2>
-          <p>길드전 기록, 추천 방어, PVE 공략, 랭킹을 한곳에서 관리합니다.</p>
-        </div>
-        <div class="login-box">
-          <input id="nickname" placeholder="닉네임 입력" />
-          <button onclick="saveNickname()">입장</button>
-        </div>
-      </div>
 
-      <section id="home" class="content active">
-        <div class="hero">
-          <h3>✨ 티니핑 길드 대시보드</h3>
-          <p>속공 계산기와 딜 계산기는 제외하고, 길드 운영에 필요한 메뉴만 담았습니다. 현재는 기본 저장형이며, 다음 단계에서 Firebase를 연결하면 여러 길드원이 함께 기록을 남길 수 있습니다.</p>
-        </div>
-
-        <div class="stats">
-          <div class="stat"><small>내 시즌 전적</small><strong>0승 0패</strong><span>기록을 추가하면 관리 가능</span></div>
-          <div class="stat"><small>최신 공지</small><strong>공지 확인</strong><span>길드장 공지사항</span></div>
-          <div class="stat"><small>이번 주 참여</small><strong>준비 중</strong><span>출결전 데이터 연동 예정</span></div>
-        </div>
-
-        <div class="quick-grid">
-          <div class="card" onclick="showPageById('attack')"><div class="icon">🗡️</div><h4>길드전 공격</h4><p>상대 방어팀과 사용 덱, 승패를 기록합니다.</p></div>
-          <div class="card" onclick="showPageById('defense')"><div class="icon">🛡️</div><h4>추천 방어</h4><p>추천 방어덱과 세팅 메모를 확인합니다.</p></div>
-          <div class="card" onclick="showPageById('pve')"><div class="icon">🏰</div><h4>PVE 공략</h4><p>공성전, 강림원정대, 레이드 공략을 정리합니다.</p></div>
-        </div>
-      </section>
-
-      <section id="notice" class="content">
-        <h3>📢 공지사항</h3>
-        <div class="list">
-          <div class="item"><strong>티니핑 길드 DB 오픈</strong><p>길드전 기록과 공략을 편하게 정리하기 위해 만든 페이지입니다.</p></div>
-          <div class="item"><strong>길드전 참여 안내</strong><p>공격권은 마감 전까지 모두 사용해주세요. 불참 예정이면 미리 공유 부탁드립니다.</p></div>
-        </div>
-      </section>
-
-      <section id="totalWar" class="content">
-        <h3>⚔️ 총력전</h3>
-
-        <div class="list" style="margin-bottom:16px;">
-          <div class="item">
-            <strong>💡 사용법</strong>
+        <div class="card">
+            <h2>📢 공지사항</h2>
             <p>
-              난이도를 선택하고, 팀별 전열/후열 캐릭터와 펫 정보를 기록하세요.<br />
-              현재는 내 브라우저에서만 보이는 기본형입니다. 다음 단계에서 Firebase를 연결하면 길드원 전체 공유가 가능합니다.
+                오늘 저녁 9시 길드전 진행 예정입니다.
             </p>
-          </div>
         </div>
 
-        <div class="quick-grid">
-          <div class="card" onclick="setTotalLevel('일반')"><div class="icon">🌱</div><h4>일반</h4><p>기본 난이도 / 2팀 기준</p></div>
-          <div class="card" onclick="setTotalLevel('고급')"><div class="icon">💧</div><h4>고급</h4><p>3팀 편성 기준</p></div>
-          <div class="card" onclick="setTotalLevel('희귀')"><div class="icon">💚</div><h4>희귀</h4><p>4팀 편성 기준</p></div>
+        <div class="card">
+            <h2>⚔ 추천 덱</h2>
+            <p>
+                불속성 조합 + 회복형 지원 추천.
+            </p>
         </div>
 
-        <div class="quick-grid">
-          <div class="card" onclick="setTotalLevel('전설')"><div class="icon">💖</div><h4>전설</h4><p>5팀 편성 기준</p></div>
-          <div class="card"><div class="icon">🔗</div><h4>공유 편성</h4><p>추후 길드원 추천 편성을 모아볼 수 있습니다.</p></div>
-          <div class="card"><div class="icon">🔒</div><h4>잠금 슬롯</h4><p>난이도에 따라 팀 슬롯을 확장할 수 있습니다.</p></div>
+        <!-- 관리자 전용 -->
+        <div class="card admin-only">
+            <h2>👑 관리자 전용 수정창</h2>
+
+            <input type="text" placeholder="공지 제목" />
+
+            <textarea placeholder="공지 내용을 입력하세요"></textarea>
+
+            <button class="save-btn">
+                저장하기
+            </button>
         </div>
 
-        <div class="hero">
-          <h3 id="totalLevelTitle">선택 난이도: 일반</h3>
-          <p>팀 편성 정보를 입력하고 아래에 기록을 추가해보세요.</p>
-        </div>
-
-        <div class="form">
-          <input id="totalTeam" placeholder="팀 번호 예: 1팀" />
-          <input id="frontLine" placeholder="전열 캐릭터 예: 캐릭터A / 캐릭터B / 캐릭터C" />
-          <input id="backLine" placeholder="후열 캐릭터 예: 캐릭터D / 캐릭터E" />
-          <input id="petInfo" placeholder="펫 정보 예: 펫 이름 / 스킬 / 특성" />
-          <textarea id="totalMemo" placeholder="운영법, 주의사항, 대체 캐릭터, 추천 장비 등을 적어주세요."></textarea>
-          <button onclick="addTotalWar()">총력전 편성 등록</button>
-        </div>
-
-        <div id="totalWarList" class="result"></div>
-      </section>
-
-      <section id="deckBuild" class="content">
-        <h3>🧩 길드전 덱편성</h3>
-        <div class="list">
-          <div class="item"><strong>1번 방어팀</strong><p>전열 탱커 / 중열 보조 / 후열 딜러 형태로 안정성 우선 편성.</p></div>
-          <div class="item"><strong>2번 방어팀</strong><p>상대 선턴 조합 대비용. 생존, 회복, 반격 요소를 중심으로 구성.</p></div>
-        </div>
-      </section>
-
-      <section id="todayWar" class="content">
-        <h3>📅 오늘의 길드전</h3>
-        <div class="form">
-          <input id="todayEnemy" placeholder="오늘 상대 길드 / 주요 상대" />
-          <textarea id="todayMemo" placeholder="오늘의 주의사항, 우선 공격 대상, 피해야 할 조합"></textarea>
-          <button onclick="addTodayWar()">오늘의 길드전 메모 등록</button>
-        </div>
-        <div id="todayWarList" class="result"></div>
-      </section>
-
-      <section id="attack" class="content">
-        <h3>🗡️ 길드전 공격 · 카운터덱 DB</h3>
-
-        <div class="hero">
-          <h3>상대 방어덱을 검색하세요</h3>
-          <p>
-            상대 덱 이름 또는 포함 캐릭터 이름을 검색하면, 연구된 카운터덱과 장비 세팅, 속공, 진형, 반지, 운영법을 확인할 수 있습니다.<br />
-            일반 길드원은 정보 열람만 가능하고, 관리자는 관리자 모드에서 카운터덱을 등록할 수 있습니다.
-          </p>
-        </div>
-
-        <div class="form" style="margin-bottom:18px; max-width:100%;">
-          <input id="counterSearch" placeholder="예: 불사덱, 회피덱, 캐릭터 이름 검색" oninput="searchCounterDecks()" />
-        </div>
-
-        <div class="quick-grid" style="margin-bottom:22px;">
-          <div class="card" onclick="quickCounterSearch('불사')"><div class="icon">🔥</div><h4>불사덱</h4><p>부활·회복 중심 방어덱 카운터</p></div>
-          <div class="card" onclick="quickCounterSearch('회피')"><div class="icon">🌪️</div><h4>회피덱</h4><p>회피/생존 중심 방어덱 카운터</p></div>
-          <div class="card" onclick="quickCounterSearch('속공')"><div class="icon">⚡</div><h4>속공덱</h4><p>선턴 제압형 방어덱 카운터</p></div>
-        </div>
-
-        <div id="counterResults" class="result"></div>
-
-        <div class="hero" style="margin-top:28px;">
-          <h3>🔐 관리자 모드</h3>
-          <p>관리자만 카운터덱을 등록, 수정, 삭제할 수 있습니다. 일반 길드원은 검색과 열람만 가능합니다.</p>
-        </div>
-
-        <div class="form" id="adminLoginBox">
-          <input id="adminPassword" type="password" placeholder="관리자 코드 입력" />
-          <button onclick="loginAdmin()">관리자 로그인</button>
-        </div>
-
-        <div class="form" id="counterAdminForm" style="display:none; margin-top:16px;">
-          <input id="enemyDeckName" placeholder="상대 방어덱 이름 예: 불사 회복덱" />
-          <input id="enemyCharacters" placeholder="상대 덱 포함 캐릭터 예: 캐릭터A, 캐릭터B, 캐릭터C" />
-          <input id="counterDeckName" placeholder="추천 카운터덱 이름 예: 선턴 제압덱" />
-          <textarea id="counterCharacters" placeholder="카운터덱 구성 캐릭터"></textarea>
-          <textarea id="equipmentSetting" placeholder="장비 세팅 예: 딜러 치명/공격, 탱커 생명/방어"></textarea>
-          <input id="speedSetting" placeholder="속공 세팅 예: 1번 캐릭터 180 이상, 딜러 160 이상" />
-          <input id="formationSetting" placeholder="진형 예: 전열 탱커 / 중열 서포터 / 후열 딜러" />
-          <input id="ringSetting" placeholder="반지 예: 딜러 치명반지, 탱커 생명반지" />
-          <textarea id="counterMemo" placeholder="운영법 / 주의사항 / 대체 캐릭터 / 금지사항"></textarea>
-          <button onclick="addCounterDeck()">카운터덱 등록</button>
-          <button type="button" onclick="logoutAdmin()" style="background:rgba(255,255,255,.12); box-shadow:none;">관리자 로그아웃</button>
-        </div>
-      </section>
-
-      <section id="defense" class="content">
-        <h3>🛡️ 추천 방어</h3>
-        <div class="list">
-          <div class="item"><strong>추천 방어 A</strong><p>안정형 방어덱. 초반 버티기와 후반 역전이 가능한 조합으로 세팅.</p></div>
-          <div class="item"><strong>추천 방어 B</strong><p>상대 주요 딜러를 빠르게 견제하는 방어덱. 선턴 변수에 강한 조합.</p></div>
-        </div>
-      </section>
-
-      <section id="pve" class="content">
-        <h3>🏰 PVE 공략</h3>
-        <div class="list">
-          <div class="item"><strong>공성전</strong><p>보스 패턴을 확인하고, 버프 타이밍에 딜을 집중합니다.</p></div>
-          <div class="item"><strong>강림원정대</strong><p>디버프 해제와 생존 조합을 우선 고려합니다.</p></div>
-          <div class="item"><strong>레이드</strong><p>자동 전투보다 주요 스킬은 수동 사용을 권장합니다.</p></div>
-        </div>
-      </section>
-
-      <section id="ranking" class="content">
-        <h3>🏆 랭킹</h3>
-        <table class="rank-table">
-          <thead><tr><th>순위</th><th>닉네임</th><th>점수</th><th>참여율</th></tr></thead>
-          <tbody>
-            <tr><td>1</td><td>쏘지</td><td>0</td><td>준비 중</td></tr>
-            <tr><td>2</td><td>티니핑 길드원</td><td>0</td><td>준비 중</td></tr>
-            <tr><td>3</td><td>티니핑 길드원</td><td>0</td><td>준비 중</td></tr>
-          </tbody>
-        </table>
-      </section>
-
-      <section id="suggest" class="content">
-        <h3>💌 건의사항</h3>
-        <div class="form">
-          <input id="suggestName" placeholder="작성자 닉네임" />
-          <textarea id="suggestText" placeholder="건의사항 또는 제보 내용을 입력하세요."></textarea>
-          <button onclick="addSuggestion()">건의 등록</button>
-        </div>
-        <div id="suggestList" class="result"></div>
-      </section>
-
-      <footer>© 2026 티니핑 길드 DB · Made with 💖</footer>
     </main>
-  </div>
 
-  <script>
-    const ADMIN_CODE = "1234";
-    let isAdmin = localStorage.getItem("tinypingAdmin") === "true";
+</div>
 
-    function updateRoleUI() {
-      const roleName = document.getElementById("roleName");
-      const adminLoginBox = document.getElementById("adminLoginBox");
-      const counterAdminForm = document.getElementById("counterAdminForm");
+<script>
 
-      if (roleName) roleName.textContent = isAdmin ? "길드 관리자" : "일반 길드원";
-      if (adminLoginBox) adminLoginBox.style.display = isAdmin ? "none" : "grid";
-      if (counterAdminForm) counterAdminForm.style.display = isAdmin ? "grid" : "none";
+const users = {
+    "쏘지": {
+        code: "1234",
+        role: "admin"
+    },
+
+    "길드원1": {
+        code: "1111",
+        role: "member"
+    },
+
+    "길드원2": {
+        code: "2222",
+        role: "member"
     }
-
-    function loginAdmin() {
-      const code = document.getElementById("adminPassword").value;
-      if (code !== ADMIN_CODE) return alert("관리자 코드가 올바르지 않습니다.");
-      isAdmin = true;
-      localStorage.setItem("tinypingAdmin", "true");
-      updateRoleUI();
-      alert("관리자 모드로 전환되었습니다.");
-    }
-
-    function logoutAdmin() {
-      isAdmin = false;
-      localStorage.removeItem("tinypingAdmin");
-      updateRoleUI();
-      alert("일반 길드원 모드로 전환되었습니다.");
-    }
-
-    function saveNickname() {
-      const nickname = document.getElementById("nickname").value.trim();
-      if (!nickname) return alert("닉네임을 입력해주세요.");
-      localStorage.setItem("tinypingNickname", nickname);
-      document.getElementById("welcomeTitle").textContent = nickname + "님, 어서오세요 👋";
-      document.getElementById("sideName").textContent = nickname;
-    }
-
-    function loadNickname() {
-      const saved = localStorage.getItem("tinypingNickname");
-      if (saved) {
-        document.getElementById("nickname").value = saved;
-        document.getElementById("welcomeTitle").textContent = saved + "님, 어서오세요 👋";
-        document.getElementById("sideName").textContent = saved;
-      }
-    }
-
-    function showPage(id, btn) {
-      document.querySelectorAll(".content").forEach(el => el.classList.remove("active"));
-      document.getElementById(id).classList.add("active");
-      document.querySelectorAll(".menu button").forEach(el => el.classList.remove("active"));
-      btn.classList.add("active");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-
-    function showPageById(id) {
-      const buttons = Array.from(document.querySelectorAll(".menu button"));
-      const target = buttons.find(btn => btn.getAttribute("onclick").includes("'" + id + "'"));
-      if (target) showPage(id, target);
-    }
-
-    function addCard(targetId, title, text) {
-      const wrap = document.getElementById(targetId);
-      const item = document.createElement("div");
-      item.className = "item";
-      item.innerHTML = `<strong>${title}</strong><p>${text}</p>`;
-      wrap.prepend(item);
-    }
-
-    function setTotalLevel(level) {
-      document.getElementById("totalLevelTitle").textContent = "선택 난이도: " + level;
-    }
-
-    function addTotalWar() {
-      const level = document.getElementById("totalLevelTitle").textContent.replace("선택 난이도: ", "");
-      const team = document.getElementById("totalTeam").value.trim() || "팀 미입력";
-      const front = document.getElementById("frontLine").value.trim() || "전열 미입력";
-      const back = document.getElementById("backLine").value.trim() || "후열 미입력";
-      const pet = document.getElementById("petInfo").value.trim() || "펫 정보 없음";
-      const memo = document.getElementById("totalMemo").value.trim() || "메모 없음";
-      addCard("totalWarList", `${level} · ${team}`, `전열: ${front}<br>후열: ${back}<br>펫: ${pet}<br><br>${memo}`);
-      document.getElementById("totalMemo").value = "";
-    }
-
-    function addTodayWar() {
-      const enemy = document.getElementById("todayEnemy").value.trim() || "상대 미입력";
-      const memo = document.getElementById("todayMemo").value.trim() || "메모 없음";
-      addCard("todayWarList", enemy, memo);
-      document.getElementById("todayMemo").value = "";
-    }
-
-    const counterDecks = [
-      {
-        enemyName: "불사 회복덱",
-        enemyChars: "부활 캐릭터, 회복 캐릭터, 보호막 캐릭터",
-        counterName: "선턴 제압 카운터",
-        counterChars: "강한 단일 딜러 / 버프 제거 / 치감 캐릭터",
-        equipment: "딜러는 공격·치명 위주, 보조는 속도·생존 위주",
-        speed: "버프 제거 캐릭터가 상대 핵심 캐릭터보다 먼저 행동 필요",
-        formation: "전열 탱커 / 중열 보조 / 후열 딜러",
-        ring: "딜러 치명반지, 탱커 생명반지 추천",
-        memo: "부활 캐릭터를 먼저 끊거나 회복 차단을 먼저 넣는 것이 중요합니다."
-      },
-      {
-        enemyName: "회피 생존덱",
-        enemyChars: "회피 캐릭터, 도발 캐릭터, 회복 캐릭터",
-        counterName: "명중 보정 카운터",
-        counterChars: "명중 보정 캐릭터 / 광역 딜러 / 버프 제거",
-        equipment: "딜러 명중·공격 세팅, 서포터 속도 세팅",
-        speed: "명중 버프 또는 버프 제거 캐릭터 선턴 권장",
-        formation: "중앙 보호형 진형 추천",
-        ring: "명중 또는 공격 반지 추천",
-        memo: "회피 버프가 켜진 뒤 공격하면 손해가 크므로 선턴 제어가 중요합니다."
-      },
-      {
-        enemyName: "속공 선턴덱",
-        enemyChars: "속공 캐릭터, 광역 딜러, 행동 게이지 증가 캐릭터",
-        counterName: "버티기 반격 카운터",
-        counterChars: "고생존 탱커 / 피해 감소 / 반격 딜러",
-        equipment: "탱커 생명·방어, 딜러 생존+공격 혼합",
-        speed: "무리한 선턴 경쟁보다 생존 세팅 우선",
-        formation: "전열 단단한 탱커 배치",
-        ring: "탱커 생명반지, 딜러 공격반지",
-        memo: "상대 첫 턴을 버티는 것이 핵심입니다. 보호막 또는 피해 감소 스킬을 활용하세요."
-      }
-    ];
-
-    function renderCounterDecks(list) {
-      const wrap = document.getElementById("counterResults");
-      wrap.innerHTML = "";
-
-      if (list.length === 0) {
-        wrap.innerHTML = `<div class="item"><strong>검색 결과 없음</strong><p>아직 등록된 카운터덱이 없습니다. 운영진 등록 영역에서 새 카운터덱을 추가해보세요.</p></div>`;
-        return;
-      }
-
-      list.forEach(deck => {
-        const item = document.createElement("div");
-        item.className = "item";
-        item.innerHTML = `
-          <strong>상대덱: ${deck.enemyName}</strong>
-          <p><b>포함 캐릭터:</b> ${deck.enemyChars}</p>
-          <p><b>추천 카운터:</b> ${deck.counterName}</p>
-          <p><b>카운터 구성:</b> ${deck.counterChars}</p>
-          <p><b>장비 세팅:</b> ${deck.equipment}</p>
-          <p><b>속공 세팅:</b> ${deck.speed}</p>
-          <p><b>진형:</b> ${deck.formation}</p>
-          <p><b>반지:</b> ${deck.ring}</p>
-          <p><b>운영 메모:</b> ${deck.memo}</p>
-        `;
-        wrap.appendChild(item);
-      });
-    }
-
-    function searchCounterDecks() {
-      const keyword = document.getElementById("counterSearch").value.trim().toLowerCase();
-      if (!keyword) {
-        renderCounterDecks(counterDecks);
-        return;
-      }
-
-      const filtered = counterDecks.filter(deck => {
-        return (
-          deck.enemyName.toLowerCase().includes(keyword) ||
-          deck.enemyChars.toLowerCase().includes(keyword) ||
-          deck.counterName.toLowerCase().includes(keyword) ||
-          deck.counterChars.toLowerCase().includes(keyword)
-        );
-      });
-
-      renderCounterDecks(filtered);
-    }
-
-    function quickCounterSearch(keyword) {
-      document.getElementById("counterSearch").value = keyword;
-      searchCounterDecks();
-      showPageById("attack");
-    }
-
-    function addCounterDeck() {
-      if (!isAdmin) return alert("관리자만 카운터덱을 등록할 수 있습니다.");
-
-      const enemyName = document.getElementById("enemyDeckName").value.trim();
-      const enemyChars = document.getElementById("enemyCharacters").value.trim();
-      const counterName = document.getElementById("counterDeckName").value.trim();
-      const counterChars = document.getElementById("counterCharacters").value.trim();
-      const equipment = document.getElementById("equipmentSetting").value.trim();
-      const speed = document.getElementById("speedSetting").value.trim();
-      const formation = document.getElementById("formationSetting").value.trim();
-      const ring = document.getElementById("ringSetting").value.trim();
-      const memo = document.getElementById("counterMemo").value.trim();
-
-      if (!enemyName || !counterName) return alert("상대 방어덱 이름과 추천 카운터덱 이름은 꼭 입력해주세요.");
-
-      counterDecks.unshift({
-        enemyName,
-        enemyChars: enemyChars || "미입력",
-        counterName,
-        counterChars: counterChars || "미입력",
-        equipment: equipment || "미입력",
-        speed: speed || "미입력",
-        formation: formation || "미입력",
-        ring: ring || "미입력",
-        memo: memo || "미입력"
-      });
-
-      document.getElementById("counterSearch").value = "";
-      renderCounterDecks(counterDecks);
-      alert("카운터덱이 등록되었습니다. 현재는 새로고침하면 사라지는 기본형입니다.");
-    }
-
-    function addSuggestion() {
-      const name = document.getElementById("suggestName").value.trim() || "익명";
-      const text = document.getElementById("suggestText").value.trim();
-      if (!text) return alert("건의 내용을 입력해주세요.");
-      addCard("suggestList", name, text);
-      document.getElementById("suggestText").value = "";
-    }
-
-    loadNickname();
-    renderCounterDecks(counterDecks);
-    updateRoleUI();
-    // Firebase SDK
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  addDoc,
-  deleteDoc,
-  doc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-// Firebase 설정
-const firebaseConfig = {
-  apiKey: "AIzaSyBxSY1hztrurOhRYnQH0jMJKJoW6ihjR_Y",
-  authDomain: "tinyping-guild-db.firebaseapp.com",
-  projectId: "tinyping-guild-db",
-  storageBucket: "tinyping-guild-db.appspot.com",
-  messagingSenderId: "204220841547",
-  appId: "1:204220841547:web:3bb3088b49936d4f0457ce" ,
 };
 
-// Firebase 시작
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+let currentUser = null;
+let currentRole = "member";
 
-console.log("Firebase 연결 완료");
-  </script>
+function login() {
+
+    const id = document.getElementById("loginId").value.trim();
+    const code = document.getElementById("loginCode").value.trim();
+
+    const user = users[id];
+
+    if (!user || user.code !== code) {
+        document.getElementById("loginMessage").innerText =
+            "아이디 또는 코드가 틀렸습니다.";
+        return;
+    }
+
+    currentUser = id;
+    currentRole = user.role;
+
+    document.getElementById("loginScreen").style.display = "none";
+
+    if (currentRole === "admin") {
+        document.body.classList.add("admin-mode");
+    }
+
+    updateRoleUI();
+}
+
+function updateRoleUI() {
+
+    const roleName = document.getElementById("roleName");
+
+    if (roleName) {
+        roleName.innerText =
+            currentRole === "admin"
+                ? "👑 관리자"
+                : "👤 길드원";
+    }
+}
+
+updateRoleUI();
+
+</script>
+
 </body>
 </html>
+```
