@@ -132,6 +132,21 @@ textarea{
     cursor:pointer;
 }
 
+.quick-btn{
+    background:#2563eb;
+    color:white;
+    border:none;
+    border-radius:14px;
+    padding:18px;
+    font-size:16px;
+    cursor:pointer;
+    text-align:left;
+}
+
+.quick-btn:hover{
+    background:#1d4ed8;
+}
+
 </style>
 </head>
 
@@ -213,26 +228,70 @@ textarea{
 
     <main class="main">
 
-        <div class="card">
+       <div class="card">
+    <h2>👤 내 길드전 전적</h2>
 
-            <h2>📢 공지사항</h2>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:15px; margin-top:15px;">
 
-            <p>
-                오늘 저녁 9시 길드전 진행 예정입니다.
-            </p>
-
+        <div style="background:#374151; padding:15px; border-radius:12px;">
+            <p style="color:#9ca3af;">시즌 승률</p>
+            <h2>78%</h2>
         </div>
 
-
-        <div class="card">
-
-            <h2>⚔ 추천 덱</h2>
-
-            <p>
-                불속성 조합 + 회복형 지원 추천
-            </p>
-
+        <div style="background:#374151; padding:15px; border-radius:12px;">
+            <p style="color:#9ca3af;">공격 횟수</p>
+            <h2>24회</h2>
         </div>
+
+        <div style="background:#374151; padding:15px; border-radius:12px;">
+            <p style="color:#9ca3af;">MVP</p>
+            <h2>5회</h2>
+        </div>
+
+        <div style="background:#374151; padding:15px; border-radius:12px;">
+            <p style="color:#9ca3af;">최근 전적</p>
+            <h2>승 / 승 / 패</h2>
+        </div>
+
+    </div>
+</div>
+
+
+<div class="card">
+    <h2>⚡ 빠른 메뉴</h2>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:15px; margin-top:15px;">
+
+        <button class="quick-btn">
+            ⚔ 길드전 공격
+        </button>
+
+        <button class="quick-btn">
+            🧩 PVE 공략
+        </button>
+
+        <button class="quick-btn">
+            👥 길드원 목록
+        </button>
+
+        <button class="quick-btn">
+            ✅ 출석체크
+        </button>
+
+    </div>
+</div>
+
+
+<div class="card">
+    <h2>📢 공지사항</h2>
+
+    <div style="background:#374151; padding:15px; border-radius:12px; margin-top:15px;">
+        <strong>오늘의 공지</strong>
+        <p style="margin-top:8px; color:#d1d5db;">
+            오늘 저녁 9시 길드전 진행 예정입니다.
+        </p>
+    </div>
+</div>
 
 
         <!-- 관리자 전용 -->
