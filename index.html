@@ -221,49 +221,40 @@ textarea {
 
 <script>
 
-const users = {
-    "쏘지": {
-        code: "1234",
-        role: "admin"
-    },
+import {
+  getAuth,
+  signInWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    "길드원1": {
-        code: "1111",
-        role: "member"
-    },
-
-    "길드원2": {
-        code: "2222",
-        role: "member"
-    }
-};
+const auth = getAuth(app);
 
 let currentUser = null;
 let currentRole = "member";
 
-function login() {
-
+async function login() {
     const id = document.getElementById("loginId").value.trim();
     const code = document.getElementById("loginCode").value.trim();
 
-    const user = users[id];
+    const email = `${id}@tinyping.com`;
 
-    if (!user || user.code !== code) {
+    try {
+        await signInWithEmailAndPassword(auth, email, code);
+
+        currentUser = id;
+        currentRole = id === "쏘지" ? "admin" : "member";
+
+        document.getElementById("loginScreen").style.display = "none";
+
+        if (currentRole === "admin") {
+            document.body.classList.add("admin-mode");
+        }
+
+        updateRoleUI();
+
+    } catch (error) {
         document.getElementById("loginMessage").innerText =
             "아이디 또는 코드가 틀렸습니다.";
-        return;
     }
-
-    currentUser = id;
-    currentRole = user.role;
-
-    document.getElementById("loginScreen").style.display = "none";
-
-    if (currentRole === "admin") {
-        document.body.classList.add("admin-mode");
-    }
-
-    updateRoleUI();
 }
 
 function updateRoleUI() {
