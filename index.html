@@ -3,375 +3,702 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
 <title>티니핑 길드 DB</title>
 
 <style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
-body {
-    font-family: Arial, sans-serif;
-    background: #111827;
-    color: white;
+body{
+    font-family:Arial,sans-serif;
+    background:#111827;
+    color:white;
 }
 
-.login-screen {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.95);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
+.login-screen{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.95);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
 }
 
-.login-box {
-    width: 320px;
-    background: #1f2937;
-    padding: 30px;
-    border-radius: 16px;
-    text-align: center;
+.login-box{
+    width:320px;
+    background:#1f2937;
+    padding:30px;
+    border-radius:16px;
+    text-align:center;
 }
 
-.login-box h1 {
-    margin-bottom: 20px;
+.login-box h1{
+    margin-bottom:20px;
 }
 
-.login-box input {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 10px;
-    border: none;
-    border-radius: 8px;
+.login-box input{
+    width:100%;
+    padding:12px;
+    margin-bottom:10px;
+    border:none;
+    border-radius:8px;
 }
 
-.login-box button {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    background: #2563eb;
-    color: white;
-    cursor: pointer;
-    font-size: 16px;
+.login-box button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    background:#2563eb;
+    color:white;
+    cursor:pointer;
+    font-size:16px;
 }
 
-.layout {
-    display: flex;
-    min-height: 100vh;
+.layout{
+    display:flex;
+    min-height:100vh;
 }
 
-.sidebar {
-    width: 250px;
-    background: #1f2937;
-    padding: 20px;
+.sidebar{
+    width:250px;
+    background:#1f2937;
+    padding:20px;
 }
 
-.sidebar h1 {
-    margin-bottom: 10px;
+.sidebar h1{
+    margin-bottom:10px;
 }
 
-.sidebar p {
-    color: #9ca3af;
-    margin-bottom: 20px;
+.sidebar p{
+    color:#9ca3af;
+    margin-bottom:20px;
 }
 
-.menu button {
-    width: 100%;
-    margin-bottom: 10px;
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    background: #374151;
-    color: white;
-    cursor: pointer;
+.menu button{
+    width:100%;
+    margin-bottom:10px;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    background:#374151;
+    color:white;
+    cursor:pointer;
 }
 
-.main {
-    flex: 1;
-    padding: 30px;
+.main{
+    flex:1;
+    padding:30px;
 }
 
-.card {
-    background: #1f2937;
-    padding: 20px;
-    border-radius: 16px;
-    margin-bottom: 20px;
+.card{
+    background:#1f2937;
+    padding:20px;
+    border-radius:16px;
+    margin-bottom:20px;
 }
 
-.admin-only {
-    display: none;
+.admin-only{
+    display:none;
 }
 
-.admin-mode .admin-only {
-    display: block;
+input,
+textarea,
+select{
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+    border:none;
+    border-radius:8px;
 }
 
-input, textarea {
-    width: 100%;
-    padding: 10px;
-    margin-top: 10px;
-    border-radius: 8px;
-    border: none;
+textarea{
+    min-height:120px;
 }
 
-textarea {
-    min-height: 120px;
+.save-btn{
+    margin-top:10px;
+    background:#dc2626;
+    color:white;
+    border:none;
+    padding:10px 16px;
+    border-radius:8px;
+    cursor:pointer;
 }
 
-.save-btn {
-    margin-top: 10px;
-    background: #dc2626;
-    color: white;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-}
 </style>
 </head>
 
 <body>
 
-<!-- 로그인 화면 -->
+<!-- 로그인 -->
+
 <div id="loginScreen" class="login-screen">
+
     <div class="login-box">
+
         <h1>🎀 티니핑 길드 DB</h1>
 
-        <input type="text" id="loginId" placeholder="아이디 입력" />
-        <input type="password" id="loginCode" placeholder="코드 입력" />
+        <input
+            type="text"
+            id="loginId"
+            placeholder="아이디 입력"
+        />
 
-        <button onclick="login()">접속하기</button>
+        <input
+            type="password"
+            id="loginCode"
+            placeholder="비밀번호 입력"
+        />
 
-        <p id="loginMessage" style="margin-top:10px;color:#f87171;"></p>
+        <button onclick="login()">
+            접속하기
+        </button>
+
+        <p
+            id="loginMessage"
+            style="margin-top:10px;color:#f87171;"
+        ></p>
+
     </div>
+
 </div>
+
 
 <div class="layout">
 
+    <!-- 사이드바 -->
+
     <aside class="sidebar">
+
         <h1>티니핑 길드 DB</h1>
-        <p id="roleName">👤 길드원</p>
+
+        <p id="roleName">
+            👤 길드원
+        </p>
 
         <div class="menu">
+
             <button>🏠 홈</button>
+
             <button>📢 공지</button>
+
             <button>⚔ 덱 정보</button>
+
             <button>📊 랭킹</button>
-            <button class="admin-only" onclick="showMemberTab()">🔐 인원관리</button>
+
+            <button
+                class="admin-only"
+                onclick="showMemberTab()"
+            >
+                🔐 인원관리
+            </button>
+
+            <button onclick="logout()">
+                🚪 로그아웃
+            </button>
+
         </div>
+
     </aside>
+
+
+    <!-- 메인 -->
 
     <main class="main">
 
         <div class="card">
+
             <h2>📢 공지사항</h2>
+
             <p>
                 오늘 저녁 9시 길드전 진행 예정입니다.
             </p>
+
         </div>
+
 
         <div class="card">
+
             <h2>⚔ 추천 덱</h2>
+
             <p>
-                불속성 조합 + 회복형 지원 추천.
+                불속성 조합 + 회복형 지원 추천
             </p>
+
         </div>
 
+
         <!-- 관리자 전용 -->
+
         <div class="card admin-only">
+
             <h2>👑 관리자 전용 수정창</h2>
 
-            <input type="text" placeholder="공지 제목" />
+            <input
+                type="text"
+                placeholder="공지 제목"
+            />
 
-            <textarea placeholder="공지 내용을 입력하세요"></textarea>
+            <textarea
+                placeholder="공지 내용을 입력하세요"
+            ></textarea>
 
             <button class="save-btn">
                 저장하기
             </button>
+
         </div>
 
-            <!-- 관리자 전용: 인원관리 -->
-        <div id="memberManageTab" class="card admin-only" style="display:none;">
+
+        <!-- 인원관리 -->
+
+        <div
+            id="memberManageTab"
+            class="card admin-only"
+            style="display:none;"
+        >
+
             <h2>🔐 인원관리</h2>
-            <p style="color:#9ca3af; margin-bottom:15px;">
-                관리자만 길드원 아이디와 코드를 생성/삭제할 수 있습니다.
+
+            <p
+                style="color:#9ca3af;margin-bottom:15px;"
+            >
+                관리자만 계정을 생성/삭제할 수 있습니다.
             </p>
 
-            <input type="text" id="newUserId" placeholder="새 아이디 예: 길드원3" />
-            <input type="text" id="newUserCode" placeholder="접속 코드 예: 3333" />
 
-            <select id="newUserRole" style="width:100%; padding:10px; margin-top:10px; border-radius:8px; border:none;">
-                <option value="member">길드원</option>
-                <option value="admin">관리자</option>
+            <input
+                type="text"
+                id="newUserId"
+                placeholder="새 아이디"
+            />
+
+            <input
+                type="password"
+                id="newUserCode"
+                placeholder="새 비밀번호"
+            />
+
+
+            <select id="newUserRole">
+
+                <option value="member">
+                    길드원
+                </option>
+
+                <option value="admin">
+                    관리자
+                </option>
+
             </select>
 
-            <button class="save-btn" onclick="addUser()">계정 생성</button>
 
-            <h3 style="margin-top:25px;">현재 등록된 인원</h3>
-            <div id="userList" style="margin-top:10px;"></div>
+            <button
+                class="save-btn"
+                onclick="addUser()"
+            >
+                계정 생성
+            </button>
+
+
+            <h3 style="margin-top:25px;">
+                현재 등록된 인원
+            </h3>
+
+            <div
+                id="userList"
+                style="margin-top:10px;"
+            ></div>
+
         </div>
 
     </main>
 
 </div>
 
-<script>
+
+<!-- Firebase -->
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
-  getAuth,
-  signInWithEmailAndPassword
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    getAuth,
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+
+// ======================
+// Firebase 설정
+// ======================
+
+const firebaseConfig = {
+
+    apiKey: "AIzaSyBxSY1hztrurOhRYnQH0jMJKJoW6ihjR_Y",
+
+    authDomain: "tinyping-guild-db.firebaseapp.com",
+
+    projectId: "tinyping-guild-db",
+
+    storageBucket: "tinyping-guild-db.firebasestorage.app",
+
+    messagingSenderId: "204220841547",
+
+    appId: "1:204220841547:web:3bb3088b49936d4f0457ce"
+
+};
+
+
+// ======================
+
+const app = initializeApp(firebaseConfig);
 
 const auth = getAuth(app);
 
+
+// ======================
+
 let currentUser = null;
+
 let currentRole = "member";
 
-async function login() {
-    const id = document.getElementById("loginId").value.trim();
-    const code = document.getElementById("loginCode").value.trim();
+
+// 관리자 목록
+
+const adminAccounts = [
+    "쏘지"
+];
+
+
+// ======================
+// 로그인
+// ======================
+
+window.login = async function(){
+
+    const id =
+        document.getElementById("loginId")
+        .value
+        .trim();
+
+    const code =
+        document.getElementById("loginCode")
+        .value
+        .trim();
 
     const email = `${id}@tinyping.com`;
 
-    try {
-        await signInWithEmailAndPassword(auth, email, code);
+    try{
+
+        await signInWithEmailAndPassword(
+            auth,
+            email,
+            code
+        );
+
+    }
+    catch(error){
+
+        document.getElementById("loginMessage")
+        .innerText =
+        "아이디 또는 비밀번호가 틀렸습니다.";
+
+    }
+
+};
+
+
+// ======================
+// 로그인 유지
+// ======================
+
+onAuthStateChanged(auth,(user)=>{
+
+    if(user){
+
+        const id =
+            user.email.split("@")[0];
 
         currentUser = id;
-        currentRole = id === "쏘지" ? "admin" : "member";
 
-        document.getElementById("loginScreen").style.display = "none";
+        currentRole =
+            adminAccounts.includes(id)
+            ? "admin"
+            : "member";
 
-        if (currentRole === "admin") {
-            document.body.classList.add("admin-mode");
-        }
+        document.getElementById(
+            "loginScreen"
+        ).style.display = "none";
 
         updateRoleUI();
 
-    } catch (error) {
-        document.getElementById("loginMessage").innerText =
-            "아이디 또는 코드가 틀렸습니다.";
     }
-}
+    else{
 
-function updateRoleUI() {
+        document.getElementById(
+            "loginScreen"
+        ).style.display = "flex";
 
-    const roleName = document.getElementById("roleName");
+    }
 
-    if (roleName) {
-        roleName.innerText =
+});
+
+
+// ======================
+// 로그아웃
+// ======================
+
+window.logout = async function(){
+
+    await signOut(auth);
+
+    location.reload();
+
+};
+
+
+// ======================
+// UI 업데이트
+// ======================
+
+function updateRoleUI(){
+
+    const roleName =
+        document.getElementById("roleName");
+
+    roleName.innerText =
+        currentRole === "admin"
+        ? "👑 관리자"
+        : "👤 길드원";
+
+
+    const adminItems =
+        document.querySelectorAll(".admin-only");
+
+    adminItems.forEach(item=>{
+
+        item.style.display =
             currentRole === "admin"
-                ? "👑 관리자"
-                : "👤 길드원";
-    }
+            ? "block"
+            : "none";
 
-    const adminOnlyItems = document.querySelectorAll(".admin-only");
-    adminOnlyItems.forEach(item => {
-        item.style.display = currentRole === "admin" ? "block" : "none";
     });
 
+
     renderUserList();
+
 }
 
-function showMemberTab() {
-    const tab = document.getElementById("memberManageTab");
-    if (tab) {
-        tab.style.display = "block";
-        tab.scrollIntoView({ behavior: "smooth" });
-    }
-}
 
-function addUser() {
-    if (currentRole !== "admin") {
-        alert("관리자만 계정을 생성할 수 있습니다.");
+// ======================
+// 인원관리 열기
+// ======================
+
+window.showMemberTab = function(){
+
+    document.getElementById(
+        "memberManageTab"
+    ).style.display = "block";
+
+};
+
+
+// ======================
+// 유저 저장
+// ======================
+
+let users = {
+
+    "쏘지":{
+        role:"admin"
+    }
+
+};
+
+
+// ======================
+// 계정 생성
+// ======================
+
+window.addUser = function(){
+
+    if(currentRole !== "admin"){
+
+        alert("관리자만 가능합니다.");
         return;
+
     }
 
-    const id = document.getElementById("newUserId").value.trim();
-    const code = document.getElementById("newUserCode").value.trim();
-    const role = document.getElementById("newUserRole").value;
+    const id =
+        document.getElementById("newUserId")
+        .value
+        .trim();
 
-    if (!id || !code) {
-        alert("아이디와 코드를 모두 입력해주세요.");
+    const role =
+        document.getElementById("newUserRole")
+        .value;
+
+    if(!id){
+
+        alert("아이디를 입력해주세요.");
         return;
+
     }
 
-    if (users[id]) {
-        alert("이미 존재하는 아이디입니다.");
+    if(users[id]){
+
+        alert("이미 존재하는 계정입니다.");
         return;
+
     }
 
-    users[id] = { code, role };
+    users[id] = {
+        role
+    };
+
     saveUsers();
+
     renderUserList();
 
-    document.getElementById("newUserId").value = "";
-    document.getElementById("newUserCode").value = "";
+    alert("계정 생성 완료");
 
-    alert("계정이 생성되었습니다.");
-}
+};
 
-function deleteUser(id) {
-    if (currentRole !== "admin") {
-        alert("관리자만 계정을 삭제할 수 있습니다.");
+
+// ======================
+// 계정 삭제
+// ======================
+
+window.deleteUser = function(id){
+
+    if(id === currentUser){
+
+        alert("현재 로그인 계정은 삭제 불가");
         return;
-    }
 
-    if (id === currentUser) {
-        alert("현재 로그인한 계정은 삭제할 수 없습니다.");
-        return;
     }
-
-    if (!confirm(id + " 계정을 삭제할까요?")) return;
 
     delete users[id];
+
     saveUsers();
+
     renderUserList();
+
+};
+
+
+// ======================
+// 저장
+// ======================
+
+function saveUsers(){
+
+    localStorage.setItem(
+        "tinypingUsers",
+        JSON.stringify(users)
+    );
+
 }
 
-function saveUsers() {
-    localStorage.setItem("tinypingUsers", JSON.stringify(users));
-}
 
-function loadUsers() {
-    const saved = localStorage.getItem("tinypingUsers");
-    if (saved) {
-        const loadedUsers = JSON.parse(saved);
-        Object.keys(loadedUsers).forEach(id => {
-            users[id] = loadedUsers[id];
-        });
+// ======================
+// 불러오기
+// ======================
+
+function loadUsers(){
+
+    const saved =
+        localStorage.getItem(
+            "tinypingUsers"
+        );
+
+    if(saved){
+
+        users = JSON.parse(saved);
+
     }
+
 }
 
-function renderUserList() {
-    const userList = document.getElementById("userList");
-    if (!userList) return;
+
+// ======================
+// 유저 목록 출력
+// ======================
+
+function renderUserList(){
+
+    const userList =
+        document.getElementById("userList");
 
     userList.innerHTML = "";
 
-    Object.keys(users).forEach(id => {
+    Object.keys(users).forEach(id=>{
+
         const user = users[id];
-        const row = document.createElement("div");
-        row.style.cssText = "display:flex; justify-content:space-between; gap:10px; align-items:center; background:#374151; padding:12px; border-radius:10px; margin-bottom:8px;";
+
+        const row =
+            document.createElement("div");
+
+        row.style.cssText =
+            "display:flex;justify-content:space-between;align-items:center;background:#374151;padding:12px;border-radius:10px;margin-bottom:8px;";
+
         row.innerHTML = `
+
             <div>
-                <strong>${id}</strong><br />
-                <span style="color:#d1d5db; font-size:13px;">코드: ${user.code} / 권한: ${user.role === "admin" ? "관리자" : "길드원"}</span>
+
+                <strong>${id}</strong><br>
+
+                <span style="font-size:13px;color:#d1d5db;">
+
+                    권한 :
+                    ${user.role === "admin"
+                        ? "관리자"
+                        : "길드원"}
+
+                </span>
+
             </div>
-            <button onclick="deleteUser('${id}')" style="background:#dc2626;color:white;border:none;border-radius:8px;padding:8px 10px;cursor:pointer;">삭제</button>
+
+            <button
+                onclick="deleteUser('${id}')"
+                style="
+                    background:#dc2626;
+                    color:white;
+                    border:none;
+                    border-radius:8px;
+                    padding:8px 10px;
+                    cursor:pointer;
+                "
+            >
+                삭제
+            </button>
+
         `;
+
         userList.appendChild(row);
+
     });
+
 }
 
+
+// ======================
+
 loadUsers();
-updateRoleUI();
 
 </script>
 
 </body>
 </html>
-```
