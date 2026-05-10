@@ -339,7 +339,13 @@ import {
     createUserWithEmailAndPassword
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
+import {
+    getFirestore,
+    doc,
+    setDoc,
+    getDoc
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ======================
 // Firebase 설정
@@ -367,6 +373,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 const auth = getAuth(app);
+
+const db = getFirestore(app);
 
 const secondaryApp = initializeApp(firebaseConfig, "Secondary");
 
@@ -655,11 +663,16 @@ window.deleteUser = function(id){
 // 저장
 // ======================
 
-function saveUsers(){
+async function saveUsers(){
 
-    localStorage.setItem(
-        "tinypingUsers",
-        JSON.stringify(users)
+    await setDoc(
+
+        doc(db, "guild", "users"),
+
+        {
+            users: users
+        }
+
     );
 
 }
@@ -669,21 +682,21 @@ function saveUsers(){
 // 불러오기
 // ======================
 
-function loadUsers(){
+async function loadUsers(){
 
-    const saved =
-        localStorage.getItem(
-            "tinypingUsers"
-        );
+    const docRef = doc(db, "guild", "users");
 
-    if(saved){
+    const docSnap = await getDoc(docRef);
 
-        users = JSON.parse(saved);
+    if(docSnap.exists()){
+
+        users = docSnap.data().users;
 
     }
 
-}
+    renderUserList();
 
+}
 
 // ======================
 // 유저 목록 출력
@@ -748,7 +761,7 @@ function renderUserList(){
 
 // ======================
 
-loadUsers();
+await loadUsers();
 
 </script>
 
