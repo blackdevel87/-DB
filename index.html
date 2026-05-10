@@ -929,33 +929,22 @@ window.saveNotice = async function(){
         <h2>📢 공지사항 게시판</h2>
         <p style="color:#9ca3af; margin-top:8px;">
             관리자 공지사항을 확인할 수 있습니다.
-        </p>
-
-        ${currentRole === "admin" ? `
-            <div style="margin-top:20px; background:#374151; padding:15px; border-radius:12px;">
-                <h3>✍ 공지 작성</h3>
-
-                <input
-                    id="noticeTitle"
-                    type="text"
-                    placeholder="공지 제목"
-                />
-
-                <textarea
-                    id="noticeContent"
-                    placeholder="공지 내용을 입력하세요"
-                ></textarea>
-
-                <button class="save-btn" onclick="saveNotice()">
-                    등록하기
-                </button>
-            </div>
-        ` : ""}
+        </p>    
 
         <div
             id="noticeBoardList"
             style="display:flex; flex-direction:column; gap:12px; margin-top:20px;"
         ></div>
+${currentRole === "admin" ? `
+    <button
+        class="save-btn"
+        onclick="showNoticeWritePage()"
+        style="margin-top:20px;"
+    >
+        ✍ 글쓰기
+    </button>
+` : ""}
+        
     </div>
 `;
 
