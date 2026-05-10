@@ -230,7 +230,8 @@
       </nav>
 
       <div class="user-bottom">
-        접속 중: <b id="sideName">게스트</b>
+        접속 중: <b id="sideName">게스트</b><br />
+        권한: <b id="roleName">일반 길드원</b>
       </div>
     </aside>
 
@@ -335,15 +336,51 @@
       </section>
 
       <section id="attack" class="content">
-        <h3>🗡️ 길드전 공격</h3>
-        <div class="form">
-          <input id="warName" placeholder="공격자 닉네임" />
-          <input id="enemy" placeholder="상대 방어팀 또는 상대 닉네임" />
-          <select id="result"><option>승리</option><option>패배</option><option>무승부</option></select>
-          <textarea id="memo" placeholder="사용 덱 / 공략 메모 / 주의사항"></textarea>
-          <button onclick="addWarRecord()">공격 기록 추가</button>
+        <h3>🗡️ 길드전 공격 · 카운터덱 DB</h3>
+
+        <div class="hero">
+          <h3>상대 방어덱을 검색하세요</h3>
+          <p>
+            상대 덱 이름 또는 포함 캐릭터 이름을 검색하면, 연구된 카운터덱과 장비 세팅, 속공, 진형, 반지, 운영법을 확인할 수 있습니다.<br />
+            일반 길드원은 정보 열람만 가능하고, 관리자는 관리자 모드에서 카운터덱을 등록할 수 있습니다.
+          </p>
         </div>
-        <div id="warRecords" class="result"></div>
+
+        <div class="form" style="margin-bottom:18px; max-width:100%;">
+          <input id="counterSearch" placeholder="예: 불사덱, 회피덱, 캐릭터 이름 검색" oninput="searchCounterDecks()" />
+        </div>
+
+        <div class="quick-grid" style="margin-bottom:22px;">
+          <div class="card" onclick="quickCounterSearch('불사')"><div class="icon">🔥</div><h4>불사덱</h4><p>부활·회복 중심 방어덱 카운터</p></div>
+          <div class="card" onclick="quickCounterSearch('회피')"><div class="icon">🌪️</div><h4>회피덱</h4><p>회피/생존 중심 방어덱 카운터</p></div>
+          <div class="card" onclick="quickCounterSearch('속공')"><div class="icon">⚡</div><h4>속공덱</h4><p>선턴 제압형 방어덱 카운터</p></div>
+        </div>
+
+        <div id="counterResults" class="result"></div>
+
+        <div class="hero" style="margin-top:28px;">
+          <h3>🔐 관리자 모드</h3>
+          <p>관리자만 카운터덱을 등록, 수정, 삭제할 수 있습니다. 일반 길드원은 검색과 열람만 가능합니다.</p>
+        </div>
+
+        <div class="form" id="adminLoginBox">
+          <input id="adminPassword" type="password" placeholder="관리자 코드 입력" />
+          <button onclick="loginAdmin()">관리자 로그인</button>
+        </div>
+
+        <div class="form" id="counterAdminForm" style="display:none; margin-top:16px;">
+          <input id="enemyDeckName" placeholder="상대 방어덱 이름 예: 불사 회복덱" />
+          <input id="enemyCharacters" placeholder="상대 덱 포함 캐릭터 예: 캐릭터A, 캐릭터B, 캐릭터C" />
+          <input id="counterDeckName" placeholder="추천 카운터덱 이름 예: 선턴 제압덱" />
+          <textarea id="counterCharacters" placeholder="카운터덱 구성 캐릭터"></textarea>
+          <textarea id="equipmentSetting" placeholder="장비 세팅 예: 딜러 치명/공격, 탱커 생명/방어"></textarea>
+          <input id="speedSetting" placeholder="속공 세팅 예: 1번 캐릭터 180 이상, 딜러 160 이상" />
+          <input id="formationSetting" placeholder="진형 예: 전열 탱커 / 중열 서포터 / 후열 딜러" />
+          <input id="ringSetting" placeholder="반지 예: 딜러 치명반지, 탱커 생명반지" />
+          <textarea id="counterMemo" placeholder="운영법 / 주의사항 / 대체 캐릭터 / 금지사항"></textarea>
+          <button onclick="addCounterDeck()">카운터덱 등록</button>
+          <button type="button" onclick="logoutAdmin()" style="background:rgba(255,255,255,.12); box-shadow:none;">관리자 로그아웃</button>
+        </div>
       </section>
 
       <section id="defense" class="content">
@@ -390,6 +427,35 @@
   </div>
 
   <script>
+    const ADMIN_CODE = "1234";
+    let isAdmin = localStorage.getItem("tinypingAdmin") === "true";
+
+    function updateRoleUI() {
+      const roleName = document.getElementById("roleName");
+      const adminLoginBox = document.getElementById("adminLoginBox");
+      const counterAdminForm = document.getElementById("counterAdminForm");
+
+      if (roleName) roleName.textContent = isAdmin ? "길드 관리자" : "일반 길드원";
+      if (adminLoginBox) adminLoginBox.style.display = isAdmin ? "none" : "grid";
+      if (counterAdminForm) counterAdminForm.style.display = isAdmin ? "grid" : "none";
+    }
+
+    function loginAdmin() {
+      const code = document.getElementById("adminPassword").value;
+      if (code !== ADMIN_CODE) return alert("관리자 코드가 올바르지 않습니다.");
+      isAdmin = true;
+      localStorage.setItem("tinypingAdmin", "true");
+      updateRoleUI();
+      alert("관리자 모드로 전환되었습니다.");
+    }
+
+    function logoutAdmin() {
+      isAdmin = false;
+      localStorage.removeItem("tinypingAdmin");
+      updateRoleUI();
+      alert("일반 길드원 모드로 전환되었습니다.");
+    }
+
     function saveNickname() {
       const nickname = document.getElementById("nickname").value.trim();
       if (!nickname) return alert("닉네임을 입력해주세요.");
@@ -451,15 +517,124 @@
       document.getElementById("todayMemo").value = "";
     }
 
-    function addWarRecord() {
-      const name = document.getElementById("warName").value.trim() || "익명";
-      const enemy = document.getElementById("enemy").value.trim();
-      const result = document.getElementById("result").value;
-      const memo = document.getElementById("memo").value.trim() || "메모 없음";
-      if (!enemy) return alert("상대 정보를 입력해주세요.");
-      addCard("warRecords", `${name} → ${enemy} : ${result}`, memo);
-      document.getElementById("enemy").value = "";
-      document.getElementById("memo").value = "";
+    const counterDecks = [
+      {
+        enemyName: "불사 회복덱",
+        enemyChars: "부활 캐릭터, 회복 캐릭터, 보호막 캐릭터",
+        counterName: "선턴 제압 카운터",
+        counterChars: "강한 단일 딜러 / 버프 제거 / 치감 캐릭터",
+        equipment: "딜러는 공격·치명 위주, 보조는 속도·생존 위주",
+        speed: "버프 제거 캐릭터가 상대 핵심 캐릭터보다 먼저 행동 필요",
+        formation: "전열 탱커 / 중열 보조 / 후열 딜러",
+        ring: "딜러 치명반지, 탱커 생명반지 추천",
+        memo: "부활 캐릭터를 먼저 끊거나 회복 차단을 먼저 넣는 것이 중요합니다."
+      },
+      {
+        enemyName: "회피 생존덱",
+        enemyChars: "회피 캐릭터, 도발 캐릭터, 회복 캐릭터",
+        counterName: "명중 보정 카운터",
+        counterChars: "명중 보정 캐릭터 / 광역 딜러 / 버프 제거",
+        equipment: "딜러 명중·공격 세팅, 서포터 속도 세팅",
+        speed: "명중 버프 또는 버프 제거 캐릭터 선턴 권장",
+        formation: "중앙 보호형 진형 추천",
+        ring: "명중 또는 공격 반지 추천",
+        memo: "회피 버프가 켜진 뒤 공격하면 손해가 크므로 선턴 제어가 중요합니다."
+      },
+      {
+        enemyName: "속공 선턴덱",
+        enemyChars: "속공 캐릭터, 광역 딜러, 행동 게이지 증가 캐릭터",
+        counterName: "버티기 반격 카운터",
+        counterChars: "고생존 탱커 / 피해 감소 / 반격 딜러",
+        equipment: "탱커 생명·방어, 딜러 생존+공격 혼합",
+        speed: "무리한 선턴 경쟁보다 생존 세팅 우선",
+        formation: "전열 단단한 탱커 배치",
+        ring: "탱커 생명반지, 딜러 공격반지",
+        memo: "상대 첫 턴을 버티는 것이 핵심입니다. 보호막 또는 피해 감소 스킬을 활용하세요."
+      }
+    ];
+
+    function renderCounterDecks(list) {
+      const wrap = document.getElementById("counterResults");
+      wrap.innerHTML = "";
+
+      if (list.length === 0) {
+        wrap.innerHTML = `<div class="item"><strong>검색 결과 없음</strong><p>아직 등록된 카운터덱이 없습니다. 운영진 등록 영역에서 새 카운터덱을 추가해보세요.</p></div>`;
+        return;
+      }
+
+      list.forEach(deck => {
+        const item = document.createElement("div");
+        item.className = "item";
+        item.innerHTML = `
+          <strong>상대덱: ${deck.enemyName}</strong>
+          <p><b>포함 캐릭터:</b> ${deck.enemyChars}</p>
+          <p><b>추천 카운터:</b> ${deck.counterName}</p>
+          <p><b>카운터 구성:</b> ${deck.counterChars}</p>
+          <p><b>장비 세팅:</b> ${deck.equipment}</p>
+          <p><b>속공 세팅:</b> ${deck.speed}</p>
+          <p><b>진형:</b> ${deck.formation}</p>
+          <p><b>반지:</b> ${deck.ring}</p>
+          <p><b>운영 메모:</b> ${deck.memo}</p>
+        `;
+        wrap.appendChild(item);
+      });
+    }
+
+    function searchCounterDecks() {
+      const keyword = document.getElementById("counterSearch").value.trim().toLowerCase();
+      if (!keyword) {
+        renderCounterDecks(counterDecks);
+        return;
+      }
+
+      const filtered = counterDecks.filter(deck => {
+        return (
+          deck.enemyName.toLowerCase().includes(keyword) ||
+          deck.enemyChars.toLowerCase().includes(keyword) ||
+          deck.counterName.toLowerCase().includes(keyword) ||
+          deck.counterChars.toLowerCase().includes(keyword)
+        );
+      });
+
+      renderCounterDecks(filtered);
+    }
+
+    function quickCounterSearch(keyword) {
+      document.getElementById("counterSearch").value = keyword;
+      searchCounterDecks();
+      showPageById("attack");
+    }
+
+    function addCounterDeck() {
+      if (!isAdmin) return alert("관리자만 카운터덱을 등록할 수 있습니다.");
+
+      const enemyName = document.getElementById("enemyDeckName").value.trim();
+      const enemyChars = document.getElementById("enemyCharacters").value.trim();
+      const counterName = document.getElementById("counterDeckName").value.trim();
+      const counterChars = document.getElementById("counterCharacters").value.trim();
+      const equipment = document.getElementById("equipmentSetting").value.trim();
+      const speed = document.getElementById("speedSetting").value.trim();
+      const formation = document.getElementById("formationSetting").value.trim();
+      const ring = document.getElementById("ringSetting").value.trim();
+      const memo = document.getElementById("counterMemo").value.trim();
+
+      if (!enemyName || !counterName) return alert("상대 방어덱 이름과 추천 카운터덱 이름은 꼭 입력해주세요.");
+
+      counterDecks.unshift({
+        enemyName,
+        enemyChars: enemyChars || "미입력",
+        counterName,
+        counterChars: counterChars || "미입력",
+        equipment: equipment || "미입력",
+        speed: speed || "미입력",
+        formation: formation || "미입력",
+        ring: ring || "미입력",
+        memo: memo || "미입력"
+      });
+
+      document.getElementById("counterSearch").value = "";
+      renderCounterDecks(counterDecks);
+      alert("카운터덱이 등록되었습니다. 현재는 새로고침하면 사라지는 기본형입니다.");
     }
 
     function addSuggestion() {
@@ -471,6 +646,8 @@
     }
 
     loadNickname();
+    renderCounterDecks(counterDecks);
+    updateRoleUI();
   </script>
 </body>
 </html>
