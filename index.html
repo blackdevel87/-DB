@@ -648,6 +648,32 @@
     loadNickname();
     renderCounterDecks(counterDecks);
     updateRoleUI();
+    // Firebase SDK
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  addDoc,
+  deleteDoc,
+  doc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// Firebase 설정
+const firebaseConfig = {
+  apiKey: "AIzaSyBxSY1hztrurOhRYnQH0jMJKJoW6ihjR_Y",
+  authDomain: "tinyping-guild-db.firebaseapp.com",
+  projectId: "tinyping-guild-db",
+  storageBucket: "tinyping-guild-db.appspot.com",
+  messagingSenderId: "204220841547",
+  appId: "1:204220841547:web:3bb3088b49936d4f0457ce" ,
+};
+
+// Firebase 시작
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+console.log("Firebase 연결 완료");
   </script>
 </body>
 </html>
