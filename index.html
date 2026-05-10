@@ -161,6 +161,7 @@ textarea {
             <button>📢 공지</button>
             <button>⚔ 덱 정보</button>
             <button>📊 랭킹</button>
+            <button class="admin-only" onclick="showMemberTab()">🔐 인원관리</button>
         </div>
     </aside>
 
@@ -191,6 +192,27 @@ textarea {
             <button class="save-btn">
                 저장하기
             </button>
+        </div>
+
+            <!-- 관리자 전용: 인원관리 -->
+        <div id="memberManageTab" class="card admin-only" style="display:none;">
+            <h2>🔐 인원관리</h2>
+            <p style="color:#9ca3af; margin-bottom:15px;">
+                관리자만 길드원 아이디와 코드를 생성/삭제할 수 있습니다.
+            </p>
+
+            <input type="text" id="newUserId" placeholder="새 아이디 예: 길드원3" />
+            <input type="text" id="newUserCode" placeholder="접속 코드 예: 3333" />
+
+            <select id="newUserRole" style="width:100%; padding:10px; margin-top:10px; border-radius:8px; border:none;">
+                <option value="member">길드원</option>
+                <option value="admin">관리자</option>
+            </select>
+
+            <button class="save-btn" onclick="addUser()">계정 생성</button>
+
+            <h3 style="margin-top:25px;">현재 등록된 인원</h3>
+            <div id="userList" style="margin-top:10px;"></div>
         </div>
 
     </main>
@@ -254,8 +276,107 @@ function updateRoleUI() {
                 ? "👑 관리자"
                 : "👤 길드원";
     }
+
+    const adminOnlyItems = document.querySelectorAll(".admin-only");
+    adminOnlyItems.forEach(item => {
+        item.style.display = currentRole === "admin" ? "block" : "none";
+    });
+
+    renderUserList();
 }
 
+function showMemberTab() {
+    const tab = document.getElementById("memberManageTab");
+    if (tab) {
+        tab.style.display = "block";
+        tab.scrollIntoView({ behavior: "smooth" });
+    }
+}
+
+function addUser() {
+    if (currentRole !== "admin") {
+        alert("관리자만 계정을 생성할 수 있습니다.");
+        return;
+    }
+
+    const id = document.getElementById("newUserId").value.trim();
+    const code = document.getElementById("newUserCode").value.trim();
+    const role = document.getElementById("newUserRole").value;
+
+    if (!id || !code) {
+        alert("아이디와 코드를 모두 입력해주세요.");
+        return;
+    }
+
+    if (users[id]) {
+        alert("이미 존재하는 아이디입니다.");
+        return;
+    }
+
+    users[id] = { code, role };
+    saveUsers();
+    renderUserList();
+
+    document.getElementById("newUserId").value = "";
+    document.getElementById("newUserCode").value = "";
+
+    alert("계정이 생성되었습니다.");
+}
+
+function deleteUser(id) {
+    if (currentRole !== "admin") {
+        alert("관리자만 계정을 삭제할 수 있습니다.");
+        return;
+    }
+
+    if (id === currentUser) {
+        alert("현재 로그인한 계정은 삭제할 수 없습니다.");
+        return;
+    }
+
+    if (!confirm(id + " 계정을 삭제할까요?")) return;
+
+    delete users[id];
+    saveUsers();
+    renderUserList();
+}
+
+function saveUsers() {
+    localStorage.setItem("tinypingUsers", JSON.stringify(users));
+}
+
+function loadUsers() {
+    const saved = localStorage.getItem("tinypingUsers");
+    if (saved) {
+        const loadedUsers = JSON.parse(saved);
+        Object.keys(loadedUsers).forEach(id => {
+            users[id] = loadedUsers[id];
+        });
+    }
+}
+
+function renderUserList() {
+    const userList = document.getElementById("userList");
+    if (!userList) return;
+
+    userList.innerHTML = "";
+
+    Object.keys(users).forEach(id => {
+        const user = users[id];
+        const row = document.createElement("div");
+        row.style.cssText = "display:flex; justify-content:space-between; gap:10px; align-items:center; background:#374151; padding:12px; border-radius:10px; margin-bottom:8px;";
+        row.innerHTML = `
+            <div>
+                <strong>${id}</strong><br />
+                <span style="color:#d1d5db; font-size:13px;">코드: ${user.code} / 권한: ${user.role === "admin" ? "관리자" : "길드원"}</span>
+            </div>
+            <button onclick="deleteUser('${id}')" style="background:#dc2626;color:white;border:none;border-radius:8px;padding:8px 10px;cursor:pointer;">삭제</button>
+        `;
+        userList.appendChild(row);
+    });
+}
+
+loadUsers();
 updateRoleUI();
 
 </script>
