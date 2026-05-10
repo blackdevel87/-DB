@@ -422,7 +422,7 @@ import {
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-    getFirestore,
+     getFirestore,
     doc,
     setDoc,
     getDoc,
@@ -432,7 +432,9 @@ import {
     query,
     orderBy,
     limit,
-    serverTimestamp
+    serverTimestamp,
+    updateDoc,
+    deleteDoc
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -905,15 +907,18 @@ window.saveNotice = async function(){
         div.style.padding = "15px";
         div.style.borderRadius = "12px";
 
-        div.innerHTML = `
-            <strong>${notice.title}</strong>
-            <div style="font-size:12px; color:#9ca3af; margin-top:4px;">
-                ${createdDate}
-            </div>
-            <p style="margin-top:8px; color:#d1d5db;">
-                ${notice.content}
-            </p>
-        `;
+        div.style.cursor = "pointer";
+
+div.onclick = function(){
+    showNoticeDetailPage(docItem.id);
+};
+
+div.innerHTML = `
+    <strong>${notice.title}</strong>
+    <div style="font-size:12px; color:#9ca3af; margin-top:4px;">
+        ${createdDate}
+    </div>
+`;
 
         noticeList.appendChild(div);
 
@@ -1042,6 +1047,28 @@ window.showNoticeDetailPage = async function(noticeId){
             <div style="margin-top:20px; background:#374151; padding:20px; border-radius:12px; white-space:pre-wrap; line-height:1.7;">
                 ${notice.content}
             </div>
+
+${currentRole === "admin" ? `
+<div style="margin-top:20px; display:flex; gap:10px;">
+    
+    <button
+        class="save-btn"
+        onclick="editNotice('${noticeId}')"
+    >
+        ✏ 수정
+    </button>
+
+    <button
+        class="save-btn"
+        onclick="deleteNoticeConfirm('${noticeId}')"
+        style="background:#dc2626;"
+    >
+        🗑 삭제
+    </button>
+
+</div>
+` : ""}
+            
         </div>
     `;
 
@@ -1083,6 +1110,82 @@ window.showNoticeWritePage = function(){
     `;
 
 };
+window.editNotice = async function(noticeId){
+
+    const docRef = doc(db, "notices", noticeId);
+    const docSnap = await getDoc(docRef);
+
+    if(!docSnap.exists()){
+        alert("공지사항을 찾을 수 없습니다.");
+        showNoticePage();
+        return;
+    }
+
+    const notice = docSnap.data();
+
+    const main = document.querySelector(".main");
+
+    main.innerHTML = `
+        <div class="card">
+            <button onclick="showNoticeDetailPage('${noticeId}')" class="save-btn">
+                ← 돌아가기
+            </button>
+
+            <h2 style="margin-top:15px;">✏ 공지사항 수정</h2>
+
+            <input
+                id="editNoticeTitle"
+                type="text"
+                value="${notice.title}"
+            />
+
+            <textarea id="editNoticeContent">${notice.content}</textarea>
+
+            <button class="save-btn" onclick="updateNotice('${noticeId}')">
+                수정 저장
+            </button>
+        </div>
+    `;
+
+};
+
+
+window.updateNotice = async function(noticeId){
+
+    const title = document.getElementById("editNoticeTitle").value.trim();
+    const content = document.getElementById("editNoticeContent").value.trim();
+
+    if(!title || !content){
+        alert("제목과 내용을 모두 입력해주세요.");
+        return;
+    }
+
+    await updateDoc(doc(db, "notices", noticeId), {
+        title: title,
+        content: content
+    });
+
+    alert("공지사항이 수정되었습니다.");
+
+    showNoticeDetailPage(noticeId);
+
+};
+
+
+window.deleteNoticeConfirm = async function(noticeId){
+
+    if(!confirm("이 공지사항을 삭제할까요?")){
+        return;
+    }
+
+    await deleteDoc(doc(db, "notices", noticeId));
+
+    alert("공지사항이 삭제되었습니다.");
+
+    showNoticePage();
+
+};
+    
 await loadUsers();
 await loadNotices();
 </script>
