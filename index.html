@@ -936,13 +936,13 @@ window.saveNotice = async function(){
             style="display:flex; flex-direction:column; gap:12px; margin-top:20px;"
         ></div>
 ${currentRole === "admin" ? `
-    <button
-        class="save-btn"
-        onclick="showNoticeWritePage()"
-        style="margin-top:20px;"
-    >
-        ✍ 글쓰기
-    </button>
+<button
+    class="save-btn"
+    onclick="showNoticeWritePage()"
+    style="margin-top:20px;"
+>
+✍️ 글쓰기
+</button>
 ` : ""}
         
     </div>
@@ -991,7 +991,54 @@ ${currentRole === "admin" ? `
         noticeBoardList.appendChild(div);
 
     });
+        
+window.showNoticeWritePage = function(){
 
+    if(currentRole !== "admin"){
+        alert("관리자만 글쓰기가 가능합니다.");
+        return;
+    }
+
+    const main = document.querySelector(".main");
+
+    main.innerHTML = `
+        <div class="card">
+
+            <button
+                onclick="showNoticePage()"
+                style="
+                    background:#374151;
+                    color:white;
+                    border:none;
+                    border-radius:8px;
+                    padding:10px 14px;
+                    cursor:pointer;
+                    margin-bottom:15px;
+                "
+            >
+                ← 목록으로
+            </button>
+
+            <h2>✍ 공지사항 글쓰기</h2>
+
+            <input
+                id="noticeTitle"
+                type="text"
+                placeholder="공지 제목"
+            />
+
+            <textarea
+                id="noticeContent"
+                placeholder="공지 내용을 입력하세요"
+            ></textarea>
+
+            <button class="save-btn" onclick="saveNotice()">
+                등록하기
+            </button>
+
+        </div>
+    `;
+        
 };
 await loadUsers();
 await loadNotices();
