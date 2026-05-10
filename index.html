@@ -920,38 +920,40 @@ window.saveNotice = async function(){
     });
 
 };
-    window.showNoticePage = function(){
+   window.showNoticePage = function(){
 
     const main = document.querySelector(".main");
 
     main.innerHTML = `
-         <div class="card">
-        <h2>📢 공지사항 게시판</h2>
-        <p style="color:#9ca3af; margin-top:8px;">
-            관리자 공지사항을 확인할 수 있습니다.
-        </p>    
+        <div class="card">
+            <h2>📢 공지사항 게시판</h2>
+            <p style="color:#9ca3af; margin-top:8px;">
+                공지 제목을 클릭하면 내용을 볼 수 있습니다.
+            </p>
 
-        <div
-            id="noticeBoardList"
-            style="display:flex; flex-direction:column; gap:12px; margin-top:20px;"
-        ></div>
-${currentRole === "admin" ? `
-<button
-    class="save-btn"
-    onclick="showNoticeWritePage()"
-    style="margin-top:20px;"
->
-✍️ 글쓰기
-</button>
-` : ""}
-        
-    </div>
-`;
+            <div
+                id="noticeBoardList"
+                style="display:flex; flex-direction:column; gap:12px; margin-top:20px;"
+            ></div>
+
+            ${currentRole === "admin" ? `
+                <button
+                    class="save-btn"
+                    onclick="showNoticeWritePage()"
+                    style="margin-top:20px;"
+                >
+                    ✍️ 글쓰기
+                </button>
+            ` : ""}
+        </div>
+    `;
 
     loadNoticeBoard();
 
 };
-    window.loadNoticeBoard = async function(){
+
+
+window.loadNoticeBoard = async function(){
 
     const noticeBoardList = document.getElementById("noticeBoardList");
 
@@ -963,6 +965,15 @@ ${currentRole === "admin" ? `
     );
 
     const querySnapshot = await getDocs(q);
+
+    if(querySnapshot.empty){
+        noticeBoardList.innerHTML = `
+            <div style="background:#374151; padding:15px; border-radius:12px; color:#9ca3af;">
+                등록된 공지사항이 없습니다.
+            </div>
+        `;
+        return;
+    }
 
     querySnapshot.forEach((docItem) => {
 
@@ -977,21 +988,66 @@ ${currentRole === "admin" ? `
         div.style.background = "#374151";
         div.style.padding = "15px";
         div.style.borderRadius = "12px";
+        div.style.cursor = "pointer";
+
+        div.onclick = function(){
+            showNoticeDetailPage(docItem.id);
+        };
 
         div.innerHTML = `
             <strong style="font-size:18px;">${notice.title}</strong>
             <div style="font-size:12px; color:#9ca3af; margin-top:4px;">
                 ${createdDate} / 작성자: ${notice.writer || "관리자"}
             </div>
-            <p style="margin-top:10px; color:#d1d5db;">
-                ${notice.content}
-            </p>
         `;
 
         noticeBoardList.appendChild(div);
 
     });
-        
+
+};
+
+
+window.showNoticeDetailPage = async function(noticeId){
+
+    const docRef = doc(db, "notices", noticeId);
+    const docSnap = await getDoc(docRef);
+
+    if(!docSnap.exists()){
+        alert("공지사항을 찾을 수 없습니다.");
+        showNoticePage();
+        return;
+    }
+
+    const notice = docSnap.data();
+
+    const createdDate =
+        notice.createdAt?.toDate?.().toLocaleDateString()
+        || "날짜 없음";
+
+    const main = document.querySelector(".main");
+
+    main.innerHTML = `
+        <div class="card">
+            <button onclick="showNoticePage()" class="save-btn">
+                ← 목록으로
+            </button>
+
+            <h2 style="margin-top:15px;">${notice.title}</h2>
+
+            <div style="font-size:13px; color:#9ca3af; margin-top:8px;">
+                ${createdDate} / 작성자: ${notice.writer || "관리자"}
+            </div>
+
+            <div style="margin-top:20px; background:#374151; padding:20px; border-radius:12px; white-space:pre-wrap; line-height:1.7;">
+                ${notice.content}
+            </div>
+        </div>
+    `;
+
+};
+
+
 window.showNoticeWritePage = function(){
 
     if(currentRole !== "admin"){
@@ -1003,23 +1059,11 @@ window.showNoticeWritePage = function(){
 
     main.innerHTML = `
         <div class="card">
-
-            <button
-                onclick="showNoticePage()"
-                style="
-                    background:#374151;
-                    color:white;
-                    border:none;
-                    border-radius:8px;
-                    padding:10px 14px;
-                    cursor:pointer;
-                    margin-bottom:15px;
-                "
-            >
+            <button onclick="showNoticePage()" class="save-btn">
                 ← 목록으로
             </button>
 
-            <h2>✍ 공지사항 글쓰기</h2>
+            <h2 style="margin-top:15px;">✍ 공지사항 글쓰기</h2>
 
             <input
                 id="noticeTitle"
@@ -1035,10 +1079,9 @@ window.showNoticeWritePage = function(){
             <button class="save-btn" onclick="saveNotice()">
                 등록하기
             </button>
-
         </div>
     `;
-        
+
 };
 await loadUsers();
 await loadNotices();
