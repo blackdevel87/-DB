@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>길드 DB</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #2b2358 0%, #0f1020 45%, #070812 100%);
+      color: #f5f5f5;
+      min-height: 100vh;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 22px 0;
+    }
+
+    .logo-area h1 {
+      font-size: 28px;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-area p {
+      margin-top: 6px;
+      color: #b9b7d9;
+      font-size: 14px;
+    }
+
+    .user-box {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      padding: 12px 14px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .user-box input {
+      width: 130px;
+      border: none;
+      outline: none;
+      border-radius: 12px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    .user-box input::placeholder {
+      color: #aaa7c9;
+    }
+
+    button {
+      border: none;
+      cursor: pointer;
+      border-radius: 12px;
+      padding: 10px 14px;
+      background: linear-gradient(135deg, #8f7bff, #ff7bbf);
+      color: #fff;
+      font-weight: 700;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      opacity: 0.94;
+    }
+
+    .hero {
+      margin-top: 10px;
+      padding: 28px;
+      border-radius: 26px;
+      background: linear-gradient(135deg, rgba(143, 123, 255, 0.28), rgba(255, 123, 191, 0.18));
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    .hero h2 {
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+
+    .hero p {
+      color: #dddaf9;
+      line-height: 1.6;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin: 22px 0;
+    }
+
+    .menu-card {
+      padding: 18px;
+      min-height: 105px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      cursor: pointer;
+      transition: 0.18s;
+    }
+
+    .menu-card:hover,
+    .menu-card.active {
+      background: rgba(143, 123, 255, 0.24);
+      transform: translateY(-2px);
+    }
+
+    .menu-card .icon {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .menu-card h3 {
+      font-size: 17px;
+      margin-bottom: 6px;
+    }
+
+    .menu-card p {
+      font-size: 13px;
+      color: #bdb9df;
+      line-height: 1.45;
+    }
+
+    .content {
+      display: none;
+      padding: 24px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      margin-bottom: 26px;
+    }
+
+    .content.active {
+      display: block;
+    }
+
+    .content h2 {
+      margin-bottom: 16px;
+      font-size: 24px;
+    }
+
+    .notice-list,
+    .guide-list,
+    .deck-list,
+    .rank-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .item {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .item strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .item span,
+    .item p {
+      color: #c9c5e9;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .form-box {
+      display: grid;
+      gap: 12px;
+      max-width: 620px;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 14px;
+      padding: 13px;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.22);
+      outline: none;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .record-result {
+      margin-top: 16px;
+      color: #cfcaff;
+      line-height: 1.6;
+    }
+
+    .footer {
+      padding: 20px 0 34px;
+      text-align: center;
+      color: #8985ad;
+      font-size: 13px;
+    }
+
+    @media (max-width: 820px) {
+      header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .user-box {
+        justify-content: space-between;
+      }
+
+      .user-box input {
+        flex: 1;
+      }
+
+      .menu-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 520px) {
+      .app {
+        padding: 14px;
+      }
+
+      .hero {
+        padding: 22px;
+      }
+
+      .hero h2 {
+        font-size: 24px;
+      }
+
+      .menu-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="logo-area">
+        <h1>⚔️ 우리 길드 DB</h1>
+        <p>길드전 기록 · 추천덱 · 공략 · 건의사항을 한곳에 정리합니다.</p>
+      </div>
+
+      <div class="user-box">
+        <input id="nickname" type="text" placeholder="닉네임 입력" />
+        <button onclick="saveNickname()">입장</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <h2 id="welcomeTitle">길드원 전용 대시보드</h2>
+      <p>
+        이번 주 길드전 기록과 추천 방어덱, PVE 공략을 빠르게 확인하세요.
+        현재 버전은 기본형이며, 추후 Firebase를 연결하면 모든 길드원이 함께 데이터를 저장할 수 있습니다.
+      </p>
+    </section>
+
+    <section class="menu-grid">
+      <div class="menu-card active" onclick="showContent('notice', this)">
+        <div class="icon">📢</div>
+        <h3>공지사항</h3>
+        <p>길드 운영 공지와 참여 안내</p>
+      </div>
+      <div class="menu-card" onclick="show
