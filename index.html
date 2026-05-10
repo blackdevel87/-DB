@@ -335,7 +335,8 @@ import {
     getAuth,
     signInWithEmailAndPassword,
     onAuthStateChanged,
-    signOut
+    signOut,
+    createUserWithEmailAndPassword
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
@@ -367,6 +368,9 @@ const app = initializeApp(firebaseConfig);
 
 const auth = getAuth(app);
 
+const secondaryApp = initializeApp(firebaseConfig, "Secondary");
+
+const secondaryAuth = getAuth(secondaryApp);
 
 // ======================
 
@@ -532,7 +536,7 @@ let users = {
 // 계정 생성
 // ======================
 
-window.addUser = function(){
+window.addUser = async function(){
 
     if(currentRole !== "admin"){
 
@@ -546,13 +550,25 @@ window.addUser = function(){
         .value
         .trim();
 
+    const password =
+        document.getElementById("newUserCode")
+        .value
+        .trim();
+
     const role =
         document.getElementById("newUserRole")
         .value;
 
-    if(!id){
+    if(!id || !password){
 
-        alert("아이디를 입력해주세요.");
+        alert("아이디와 비밀번호를 모두 입력해주세요.");
+        return;
+
+    }
+
+    if(password.length < 6){
+
+        alert("비밀번호는 6자리 이상이어야 합니다.");
         return;
 
     }
@@ -564,18 +580,54 @@ window.addUser = function(){
 
     }
 
-    users[id] = {
-        role
-    };
+    const email = `${id}@tinyping.com`;
 
-    saveUsers();
+    try{
 
-    renderUserList();
+        await createUserWithEmailAndPassword(
+            secondaryAuth,
+            email,
+            password
+        );
 
-    alert("계정 생성 완료");
+        users[id] = {
+            role: role
+        };
+
+        saveUsers();
+
+        renderUserList();
+
+        document.getElementById("newUserId").value = "";
+
+        document.getElementById("newUserCode").value = "";
+
+        alert("Firebase 계정 생성 완료!");
+
+    }
+    catch(error){
+
+        console.log(error);
+
+        if(error.code === "auth/email-already-in-use"){
+
+            alert("이미 Firebase에 등록된 아이디입니다.");
+
+        }
+        else if(error.code === "auth/weak-password"){
+
+            alert("비밀번호는 6자리 이상이어야 합니다.");
+
+        }
+        else{
+
+            alert("계정 생성 중 오류가 발생했습니다.");
+
+        }
+
+    }
 
 };
-
 
 // ======================
 // 계정 삭제
