@@ -1,0 +1,660 @@
+import {
+    db,
+    doc,
+    getDoc,
+    collection,
+    addDoc,
+    getDocs,
+    query,
+    updateDoc,
+    deleteDoc
+} from "./firebase-config.js";
+
+import { state } from "./state.js";
+
+
+// ============================================
+// 1. 메인 페이지
+// ============================================
+window.showGuildAttackPage = function() {
+    const main = document.querySelector(".main");
+    if (!main) return;
+
+    const isAdmin = (state.currentRole === 'admin');
+
+    main.innerHTML = `
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div>
+                    <h2 style="margin:0;">⚔️ 길드전 공격 공략</h2>
+                    <p style="color:#9ca3af; margin-top:4px;">상대 방어팀을 검색하여 공격 덱을 확인하세요</p>
+                </div>
+                ${isAdmin ? `
+                <button
+                    onclick="showAddDefensePage()"
+                    style="background:#2563eb; color:white; border:none; border-radius:10px; padding:10px 16px; font-size:14px; font-weight:700; cursor:pointer;"
+                >
+                    + 방어팀 추가
+                </button>
+                ` : ''}
+            </div>
+
+            <input
+                type="text"
+                id="guildAttackSearch"
+                placeholder="방어팀 이름 검색..."
+                style="width:100%; padding:14px; background:#374151; border:1px solid #4b5563; border-radius:12px; color:white; font-size:14px; margin-bottom:20px;"
+            />
+
+            <div id="guildDefenseList">
+                <div style="text-align:center; color:#9ca3af; padding:40px;">데이터를 불러오는 중...</div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('guildAttackSearch').addEventListener('input', (e) => {
+        renderGuildDefenseList(e.target.value);
+    });
+
+    loadGuildDefenseData();
+};
+
+// ============================================
+// 2. 데이터 로드
+// ============================================
+async function loadGuildDefenseData() {
+    try {
+        const q = query(collection(db, "defenseTeams"));
+        const querySnapshot = await getDocs(q);
+
+        state.guildDefenseData = {};
+        querySnapshot.forEach((docItem) => {
+            state.guildDefenseData[docItem.id] = { ...docItem.data(), id: docItem.id };
+        });
+
+        renderGuildDefenseList();
+    } catch (error) {
+        console.error("데이터 로드 실패:", error);
+        const container = document.getElementById('guildDefenseList');
+        if (container) {
+            container.innerHTML = `<div style="text-align:center; color:#dc2626; padding:40px;">데이터를 불러올 수 없습니다.<br><small>${error.message}</small></div>`;
+        }
+    }
+}
+
+// ============================================
+// 3. 퍼지 검색
+// ============================================
+function fuzzySearchGuild(query, text) {
+    if (!query) return true;
+    query = query.toLowerCase().replace(/\s/g, '');
+    text = text.toLowerCase().replace(/\s/g, '');
+    if (text.includes(query)) return true;
+    const queryWords = query.split('');
+    let textIndex = 0;
+    for (let char of queryWords) {
+        textIndex = text.indexOf(char, textIndex);
+        if (textIndex === -1) return false;
+        textIndex++;
+    }
+    return true;
+}
+
+// ============================================
+// 4. 목록 렌더링
+// ============================================
+function renderGuildDefenseList(searchQuery = '') {
+    const container = document.getElementById('guildDefenseList');
+    if (!container) return;
+
+    const isAdmin = (state.currentRole === 'admin');
+
+    const filtered = Object.entries(state.guildDefenseData).filter(([key, def]) =>
+        fuzzySearchGuild(searchQuery, def.name || '')
+    );
+
+    if (filtered.length === 0) {
+        container.innerHTML = `<div style="text-align:center; color:#9ca3af; padding:40px;">${searchQuery ? '검색 결과가 없습니다' : '등록된 방어팀이 없습니다'}</div>`;
+        return;
+    }
+
+    container.innerHTML = filtered.map(([key, def]) => {
+        const attacks = Object.entries(def.attackTeams || {});
+        const totalWin = attacks.reduce((sum, [_, atk]) => sum + (atk.win || 0), 0);
+        const totalLose = attacks.reduce((sum, [_, atk]) => sum + (atk.lose || 0), 0);
+
+        return `
+            <div class="defense-card-guild" data-key="${key}" style="background:#374151; border:1px solid #4b5563; border-radius:12px; padding:16px; margin-bottom:12px; cursor:pointer; transition:all 0.2s;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="flex:1;">
+                        <div style="font-size:16px; font-weight:900; margin-bottom:4px;">${def.name || '이름 없음'}</div>
+                        <div style="font-size:11px; color:#9ca3af;">공격덱 ${attacks.length}개 · 승 ${totalWin} · 패 ${totalLose}</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        ${isAdmin ? `
+                        <button
+                            onclick="event.stopPropagation(); showAddAttackDeckPage('${key}', '${(def.name || '').replace(/'/g, "\\'")}')"
+                            style="background:#2563eb; color:white; border:none; border-radius:8px; padding:6px 12px; font-size:12px; cursor:pointer; font-weight:700;"
+                        >
+                            + 추가
+                        </button>
+                        <button
+                            onclick="event.stopPropagation(); deleteDefenseTeam('${key}', '${(def.name || '').replace(/'/g, "\\'")}')"
+                            style="background:#dc2626; color:white; border:none; border-radius:8px; padding:6px 12px; font-size:12px; cursor:pointer; font-weight:700;"
+                        >
+                            삭제
+                        </button>
+                        ` : ''}
+                        <div class="expand-icon-guild" style="font-size:18px; color:#9ca3af; transition:transform 0.2s;">▼</div>
+                    </div>
+                </div>
+
+                <div class="attack-list-guild" style="margin-top:12px; padding:12px; background:rgba(0,0,0,0.2); border-radius:8px; display:none;">
+                    ${attacks.length === 0 ?
+                        '<div style="color:#9ca3af; text-align:center; padding:10px;">등록된 공격덱이 없습니다</div>' :
+                        attacks.map(([atkKey, atk]) => `
+                            <div style="background:#1f2937; border:1px solid #374151; border-radius:8px; padding:12px; margin-bottom:8px;">
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                                    <div style="flex:1;">
+                                        <div style="font-size:14px; font-weight:700; margin-bottom:6px;">${atk.name || '이름 없음'}</div>
+                                        <div style="display:flex; gap:12px; font-size:11px;">
+                                            <span style="padding:4px 10px; background:rgba(46,204,113,0.15); border-radius:6px; color:#27ae60;">승 ${atk.win || 0}</span>
+                                            <span style="padding:4px 10px; background:rgba(231,76,60,0.15); border-radius:6px; color:#e74c3c;">패 ${atk.lose || 0}</span>
+                                        </div>
+                                    </div>
+                                    ${isAdmin ? `
+                                    <button
+                                        onclick="deleteAttackDeck('${key}', '${atkKey}', '${(atk.name || '').replace(/'/g, "\\'")}')"
+                                        style="background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 10px; font-size:11px; cursor:pointer;"
+                                    >
+                                        삭제
+                                    </button>
+                                    ` : ''}
+                                </div>
+
+                                ${atk.formation ? `
+                                <div style="margin:10px 0;">
+                                    <div style="font-size:11px; color:#9ca3af; margin-bottom:6px;">진형 배치</div>
+                                    <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:4px;">
+                                        ${atk.formation.split(',').map((char, idx) => `
+                                            <div style="background:rgba(59,130,246,0.1); border:1px solid #3b82f6; border-radius:6px; padding:6px; text-align:center; font-size:10px; color:#60a5fa;">
+                                                ${char.trim() || '_'}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                ` : ''}
+
+                                ${atk.detail ? `
+                                <div style="font-size:11px; color:#9ca3af; margin-top:8px; padding:8px; background:rgba(0,0,0,0.2); border-radius:6px; white-space:pre-wrap;">${atk.detail}</div>
+                                ` : ''}
+
+                                ${atk.logs && atk.logs.length > 0 ? `
+                                <div style="margin-top:10px; padding-top:10px; border-top:1px solid #374151;">
+                                    <div style="font-size:11px; color:#9ca3af; margin-bottom:6px;">최근 전적 (${atk.logs.length}건)</div>
+                                    <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                                        ${atk.logs.slice(0, 10).map(log => `
+                                            <span style="
+                                                width:18px;
+                                                height:18px;
+                                                display:inline-flex;
+                                                align-items:center;
+                                                justify-content:center;
+                                                border-radius:4px;
+                                                font-size:10px;
+                                                font-weight:700;
+                                                background:${log.result === 'win' ? 'rgba(46,204,113,0.2)' : 'rgba(231,76,60,0.2)'};
+                                                color:${log.result === 'win' ? '#27ae60' : '#e74c3c'};
+                                            " title="${log.nick} · ${log.date}">
+                                                ${log.result === 'win' ? 'W' : 'L'}
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                ` : ''}
+
+                                <button
+                                    onclick="showRecordWinPage('${key}', '${atkKey}', '${(def.name || '').replace(/'/g, "\\'")}')"
+                                    style="width:100%; margin-top:10px; background:#2563eb; color:white; border:none; border-radius:6px; padding:8px; font-size:12px; cursor:pointer; font-weight:700;"
+                                >
+                                    📝 승리 기록하기
+                                </button>
+                            </div>
+                        `).join('')
+                    }
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    document.querySelectorAll('.defense-card-guild').forEach(card => {
+        card.addEventListener('click', function() {
+            const isExpanded = this.classList.contains('expanded');
+            document.querySelectorAll('.defense-card-guild').forEach(c => {
+                c.classList.remove('expanded');
+                c.querySelector('.attack-list-guild').style.display = 'none';
+                c.querySelector('.expand-icon-guild').style.transform = 'rotate(0deg)';
+                c.style.borderColor = '#4b5563';
+            });
+            if (!isExpanded) {
+                this.classList.add('expanded');
+                this.querySelector('.attack-list-guild').style.display = 'block';
+                this.querySelector('.expand-icon-guild').style.transform = 'rotate(180deg)';
+                this.style.borderColor = '#3b82f6';
+            }
+        });
+        card.addEventListener('mouseenter', function() {
+            if (!this.classList.contains('expanded')) this.style.background = '#4b5563';
+        });
+        card.addEventListener('mouseleave', function() {
+            if (!this.classList.contains('expanded')) this.style.background = '#374151';
+        });
+    });
+}
+
+// ============================================
+// 5. 방어팀 추가 (관리자 전용)
+// ============================================
+window.showAddDefensePage = function() {
+    if (state.currentRole !== 'admin') {
+        alert('관리자만 방어팀을 추가할 수 있습니다.');
+        return;
+    }
+
+    const main = document.querySelector(".main");
+    if (!main) return;
+
+    main.innerHTML = `
+        <div class="card">
+            <button onclick="showGuildAttackPage()" class="save-btn" style="background:#6b7280;">← 목록으로</button>
+            <h2 style="margin-top:15px;">🛡️ 방어팀 추가</h2>
+            <p style="color:#9ca3af; margin-top:8px;">새로운 상대 방어팀을 등록합니다</p>
+            <hr style="margin:20px 0; border-color:#374151;">
+            <label style="color:#9ca3af; font-size:14px;">방어팀 이름</label>
+            <input type="text" id="newDefenseName" placeholder="예: 카일 카라크 브&" style="background:#374151; color:white; border:1px solid #4b5563;" />
+            <button onclick="saveNewDefense()" class="save-btn" style="width:100%; margin-top:20px; background:#2563eb; font-size:16px; padding:14px;">💾 등록하기</button>
+        </div>
+    `;
+};
+
+window.saveNewDefense = async function() {
+    if (state.currentRole !== 'admin') {
+        alert('관리자만 방어팀을 추가할 수 있습니다.');
+        return;
+    }
+
+    const nameInput = document.getElementById('newDefenseName');
+    if (!nameInput) return;
+    const name = nameInput.value.trim();
+    if (!name) { alert('방어팀 이름을 입력하세요.'); return; }
+    try {
+        await addDoc(collection(db, "defenseTeams"), { name: name, attackTeams: {} });
+        alert('방어팀이 등록되었습니다! ✅');
+        await loadGuildDefenseData();
+        showGuildAttackPage();
+    } catch (error) {
+        console.error("저장 실패:", error);
+        alert('저장에 실패했습니다: ' + error.message);
+    }
+};
+
+// ============================================
+// 6. 방어팀 삭제 (관리자 전용)
+// ============================================
+window.deleteDefenseTeam = async function(defenseKey, defenseName) {
+    if (state.currentRole !== 'admin') {
+        alert('관리자만 방어팀을 삭제할 수 있습니다.');
+        return;
+    }
+
+    if (!confirm(`"${defenseName}" 방어팀을 완전히 삭제하시겠습니까?\n(모든 공격 덱도 함께 삭제됩니다)`)) return;
+
+    try {
+        const defenseRef = doc(db, "defenseTeams", defenseKey);
+        await deleteDoc(defenseRef);
+
+        alert('삭제되었습니다.');
+        await loadGuildDefenseData();
+        renderGuildDefenseList();
+    } catch (error) {
+        console.error("삭제 실패:", error);
+        alert('삭제에 실패했습니다: ' + error.message);
+    }
+};
+
+// ============================================
+// 7. 공격 덱 추가 (관리자 전용 + 진형 배치)
+// ============================================
+window.showAddAttackDeckPage = function(defenseKey, defenseName) {
+    if (state.currentRole !== 'admin') {
+        alert('관리자만 공격 덱을 추가할 수 있습니다.');
+        return;
+    }
+
+    const main = document.querySelector(".main");
+    if (!main) return;
+
+    state.attackLogResult = null;
+    state.selectedFormation = ['', '', '', '', ''];
+
+    main.innerHTML = `
+        <div class="card">
+            <button onclick="showGuildAttackPage()" class="save-btn" style="background:#6b7280;">← 목록으로</button>
+
+            <h2 style="margin-top:15px;">⚔️ 공격 덱 등록</h2>
+            <p style="color:#9ca3af; margin-top:8px;">방어팀: <strong>${defenseName}</strong></p>
+
+            <hr style="margin:20px 0; border-color:#374151;">
+
+            <!-- 덱 이름 -->
+            <label style="color:#9ca3af; font-size:14px;">덱 이름</label>
+            <input type="text" id="newDeckName" placeholder="예: 라드그리드 트루드 엘리시아" style="background:#374151; color:white; border:1px solid #4b5563;" />
+
+            <!-- 진형 배치 -->
+            <label style="color:#9ca3af; font-size:14px; margin-top:15px; display:block;">진형 배치 (5슬롯)</label>
+            <div id="formationGrid" style="display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-top:10px;">
+                ${[0,1,2,3,4].map(idx => `
+                    <div style="position:relative;">
+                        <select
+                            id="formSlot${idx}"
+                            onchange="updateFormationSlot(${idx})"
+                            style="width:100%; padding:10px; background:#374151; border:1px solid #4b5563; border-radius:8px; color:white; font-size:11px;"
+                        >
+                            <option value="">슬롯 ${idx + 1}</option>
+                            ${state.guildCharacters.map(char => `<option value="${char}">${char}</option>`).join('')}
+                        </select>
+                    </div>
+                `).join('')}
+            </div>
+
+            <!-- 승/패 선택 -->
+            <label style="color:#9ca3af; font-size:14px; margin-top:15px; display:block;">승/패 결과</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+                <button
+                    id="selectWinBtn"
+                    onclick="selectAttackResult('win')"
+                    style="padding:12px; background:#374151; border:1px solid #4b5563; border-radius:8px; color:#9ca3af; cursor:pointer; font-size:14px; font-weight:700; transition:all 0.2s;"
+                >
+                    ✅ 승리
+                </button>
+                <button
+                    id="selectLoseBtn"
+                    onclick="selectAttackResult('lose')"
+                    style="padding:12px; background:#374151; border:1px solid #4b5563; border-radius:8px; color:#9ca3af; cursor:pointer; font-size:14px; font-weight:700; transition:all 0.2s;"
+                >
+                    💀 패배
+                </button>
+            </div>
+
+            <!-- 상세 정보 -->
+            <label style="color:#9ca3af; font-size:14px; margin-top:15px; display:block;">상세 정보 (선택)</label>
+            <textarea
+                id="newDeckDetail"
+                placeholder="예: 라드 5부활 이상, 트루드 겔리두스, 엘리 부활"
+                style="background:#374151; color:white; border:1px solid #4b5563; min-height:80px; resize:vertical;"
+            ></textarea>
+
+            <!-- 저장 버튼 -->
+            <button
+                onclick="saveNewAttackDeck('${defenseKey}')"
+                class="save-btn"
+                style="width:100%; margin-top:20px; background:#2563eb; font-size:16px; padding:14px;"
+            >
+                💾 등록하기
+            </button>
+        </div>
+    `;
+};
+
+window.updateFormationSlot = function(idx) {
+    const select = document.getElementById(`formSlot${idx}`);
+    if (select) {
+        state.selectedFormation[idx] = select.value;
+    }
+};
+
+window.selectAttackResult = function(result) {
+    state.attackLogResult = result;
+    const winBtn = document.getElementById('selectWinBtn');
+    const loseBtn = document.getElementById('selectLoseBtn');
+
+    if (result === 'win') {
+        winBtn.style.borderColor = '#2ecc71';
+        winBtn.style.background = 'rgba(46,204,113,0.15)';
+        winBtn.style.color = '#2ecc71';
+        loseBtn.style.borderColor = '#4b5563';
+        loseBtn.style.background = '#374151';
+        loseBtn.style.color = '#9ca3af';
+    } else {
+        loseBtn.style.borderColor = '#e74c3c';
+        loseBtn.style.background = 'rgba(231,76,60,0.15)';
+        loseBtn.style.color = '#e74c3c';
+        winBtn.style.borderColor = '#4b5563';
+        winBtn.style.background = '#374151';
+        winBtn.style.color = '#9ca3af';
+    }
+};
+
+window.saveNewAttackDeck = async function(defenseKey) {
+    if (state.currentRole !== 'admin') {
+        alert('관리자만 공격 덱을 추가할 수 있습니다.');
+        return;
+    }
+
+    const name = document.getElementById('newDeckName').value.trim();
+    const detail = document.getElementById('newDeckDetail').value.trim();
+    const formation = state.selectedFormation.join(',');
+
+    if (!name) { alert('덱 이름을 입력하세요.'); return; }
+    if (!state.attackLogResult) { alert('승/패 결과를 선택하세요.'); return; }
+
+    try {
+        const defenseRef = doc(db, "defenseTeams", defenseKey);
+        const defenseDoc = await getDoc(defenseRef);
+
+        if (!defenseDoc.exists()) { alert('방어팀을 찾을 수 없습니다.'); return; }
+
+        const defenseData = defenseDoc.data();
+        const attackTeams = defenseData.attackTeams || {};
+
+        // 현재 사용자 닉네임 (티니핑에서 currentUser 사용)
+        const userNick = state.currentUser || '관리자';
+
+        // 로그 데이터
+        const newLog = {
+            nick: userNick,
+            result: state.attackLogResult,
+            date: new Date().toISOString().slice(0, 10),
+            time: Date.now()
+        };
+
+        let existingKey = null;
+        for (const [key, atk] of Object.entries(attackTeams)) {
+            if (atk.name === name) {
+                existingKey = key;
+                break;
+            }
+        }
+
+        if (existingKey) {
+            const existing = attackTeams[existingKey];
+            attackTeams[existingKey] = {
+                name: name,
+                win: (existing.win || 0) + (state.attackLogResult === 'win' ? 1 : 0),
+                lose: (existing.lose || 0) + (state.attackLogResult === 'lose' ? 1 : 0),
+                detail: detail || existing.detail || '',
+                formation: formation || existing.formation || '',
+                logs: [...(existing.logs || []), newLog]
+            };
+        } else {
+            const newId = 'atk_' + Date.now();
+            attackTeams[newId] = {
+                name: name,
+                win: state.attackLogResult === 'win' ? 1 : 0,
+                lose: state.attackLogResult === 'lose' ? 1 : 0,
+                detail: detail,
+                formation: formation,
+                logs: [newLog]
+            };
+        }
+
+        await updateDoc(defenseRef, { attackTeams: attackTeams });
+
+        alert(`공격 덱이 등록되었습니다! ${state.attackLogResult === 'win' ? '🏆 승리' : '💀 패배'}`);
+
+        await loadGuildDefenseData();
+        showGuildAttackPage();
+
+    } catch (error) {
+        console.error("저장 실패:", error);
+        alert('저장에 실패했습니다: ' + error.message);
+    }
+};
+
+// ============================================
+// 8. 승리 기록 페이지
+// ============================================
+window.showRecordWinPage = function(defenseKey, attackKey, defenseName) {
+    const main = document.querySelector(".main");
+    if (!main) return;
+
+    state.attackLogResult = null;
+
+    main.innerHTML = `
+        <div class="card">
+            <button onclick="showGuildAttackPage()" class="save-btn" style="background:#6b7280;">← 목록으로</button>
+
+            <h2 style="margin-top:15px;">📝 승리 기록</h2>
+            <p style="color:#9ca3af; margin-top:8px;">방어팀: <strong>${defenseName}</strong></p>
+
+            <hr style="margin:20px 0; border-color:#374151;">
+
+            <!-- 승/패 선택 -->
+            <label style="color:#9ca3af; font-size:14px;">전투 결과</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+                <button
+                    id="recordWinBtn"
+                    onclick="selectRecordResult('win')"
+                    style="padding:14px; background:#374151; border:1px solid #4b5563; border-radius:8px; color:#9ca3af; cursor:pointer; font-size:16px; font-weight:700; transition:all 0.2s;"
+                >
+                    ✅ 승리
+                </button>
+                <button
+                    id="recordLoseBtn"
+                    onclick="selectRecordResult('lose')"
+                    style="padding:14px; background:#374151; border:1px solid #4b5563; border-radius:8px; color:#9ca3af; cursor:pointer; font-size:16px; font-weight:700; transition:all 0.2s;"
+                >
+                    💀 패배
+                </button>
+            </div>
+
+            <!-- 기록 버튼 -->
+            <button
+                onclick="saveWinRecord('${defenseKey}', '${attackKey}')"
+                class="save-btn"
+                style="width:100%; margin-top:20px; background:#2563eb; font-size:16px; padding:14px;"
+            >
+                💾 기록하기
+            </button>
+        </div>
+    `;
+};
+
+window.selectRecordResult = function(result) {
+    state.attackLogResult = result;
+    const winBtn = document.getElementById('recordWinBtn');
+    const loseBtn = document.getElementById('recordLoseBtn');
+
+    if (result === 'win') {
+        winBtn.style.borderColor = '#2ecc71';
+        winBtn.style.background = 'rgba(46,204,113,0.15)';
+        winBtn.style.color = '#2ecc71';
+        loseBtn.style.borderColor = '#4b5563';
+        loseBtn.style.background = '#374151';
+        loseBtn.style.color = '#9ca3af';
+    } else {
+        loseBtn.style.borderColor = '#e74c3c';
+        loseBtn.style.background = 'rgba(231,76,60,0.15)';
+        loseBtn.style.color = '#e74c3c';
+        winBtn.style.borderColor = '#4b5563';
+        winBtn.style.background = '#374151';
+        winBtn.style.color = '#9ca3af';
+    }
+};
+
+window.saveWinRecord = async function(defenseKey, attackKey) {
+    if (!state.attackLogResult) { alert('승/패 결과를 선택하세요.'); return; }
+
+    try {
+        const defenseRef = doc(db, "defenseTeams", defenseKey);
+        const defenseDoc = await getDoc(defenseRef);
+
+        if (!defenseDoc.exists()) { alert('방어팀을 찾을 수 없습니다.'); return; }
+
+        const defenseData = defenseDoc.data();
+        const attackTeams = defenseData.attackTeams || {};
+        const attack = attackTeams[attackKey];
+
+        if (!attack) { alert('공격 덱을 찾을 수 없습니다.'); return; }
+
+        const userNick = state.currentUser || '사용자';
+
+        const newLog = {
+            nick: userNick,
+            result: state.attackLogResult,
+            date: new Date().toISOString().slice(0, 10),
+            time: Date.now()
+        };
+
+        attackTeams[attackKey] = {
+            ...attack,
+            win: (attack.win || 0) + (state.attackLogResult === 'win' ? 1 : 0),
+            lose: (attack.lose || 0) + (state.attackLogResult === 'lose' ? 1 : 0),
+            logs: [...(attack.logs || []), newLog]
+        };
+
+        await updateDoc(defenseRef, { attackTeams: attackTeams });
+
+        alert(`${state.attackLogResult === 'win' ? '🏆 승리' : '💀 패배'} 기록되었습니다!`);
+
+        await loadGuildDefenseData();
+        showGuildAttackPage();
+
+    } catch (error) {
+        console.error("기록 실패:", error);
+        alert('기록에 실패했습니다: ' + error.message);
+    }
+};
+
+// ============================================
+// 9. 공격 덱 삭제 (관리자 전용)
+// ============================================
+window.deleteAttackDeck = async function(defenseKey, attackKey, deckName) {
+    if (state.currentRole !== 'admin') {
+        alert('관리자만 공격 덱을 삭제할 수 있습니다.');
+        return;
+    }
+
+    if (!confirm(`"${deckName}" 덱을 삭제하시겠습니까?`)) return;
+
+    try {
+        const defenseRef = doc(db, "defenseTeams", defenseKey);
+        const defenseDoc = await getDoc(defenseRef);
+
+        if (!defenseDoc.exists()) { alert('방어팀을 찾을 수 없습니다.'); return; }
+
+        const defenseData = defenseDoc.data();
+        const attackTeams = defenseData.attackTeams || {};
+        delete attackTeams[attackKey];
+
+        await updateDoc(defenseRef, { attackTeams: attackTeams });
+
+        alert('삭제되었습니다.');
+        await loadGuildDefenseData();
+        renderGuildDefenseList();
+
+    } catch (error) {
+        console.error("삭제 실패:", error);
+        alert('삭제에 실패했습니다: ' + error.message);
+    }
+};
