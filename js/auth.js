@@ -65,10 +65,7 @@ onAuthStateChanged(auth,(user)=>{
 
         state.currentUser = id;
 
-        state.currentRole =
-            adminAccounts.includes(id)
-            ? "admin"
-            : "member";
+        state.currentRole = resolveRole(id);
 
         document.getElementById(
             "loginScreen"
@@ -99,6 +96,25 @@ window.logout = async function(){
     location.reload();
 
 };
+
+
+// ======================
+// 권한 판정 — Firebase users 의 role 우선, fallback 으로 adminAccounts (부트스트랩 보호)
+// ======================
+
+function resolveRole(id){
+
+    if(state.users[id] && state.users[id].role === "admin"){
+        return "admin";
+    }
+
+    if(adminAccounts.includes(id)){
+        return "admin";
+    }
+
+    return "member";
+
+}
 
 
 // ======================
@@ -302,7 +318,19 @@ export async function loadUsers(){
 
     }
 
-    renderUserList();
+    // users 로드 시점에 이미 로그인된 상태면 role 재판정 (race condition 보정)
+    if(state.currentUser){
+
+        state.currentRole = resolveRole(state.currentUser);
+
+        updateRoleUI();
+
+    }
+    else{
+
+        renderUserList();
+
+    }
 
 }
 
