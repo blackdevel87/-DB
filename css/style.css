@@ -136,3 +136,28 @@ textarea{
 .quick-btn:hover{
     background:#1d4ed8;
 }
+
+/* ── PVE 탭 버튼 ── */
+.pve-tab-btn {
+    padding: 9px 16px;
+    border-radius: 9px;
+    border: 1px solid #4b5563;
+    background: #374151;
+    color: #9ca3af;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+}
+
+.pve-tab-btn:hover {
+    border-color: #6b7280;
+    color: #e5e7eb;
+}
+
+.active-pve {
+    background: rgba(37,99,235,0.15) !important;
+    border-color: #3b82f6 !important;
+    color: #60a5fa !important;
+}

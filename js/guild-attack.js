@@ -172,18 +172,6 @@ function renderGuildDefenseList(searchQuery = '') {
                                     ` : ''}
                                 </div>
 
-                                ${atk.formation ? `
-                                <div style="margin:10px 0;">
-                                    <div style="font-size:11px; color:#9ca3af; margin-bottom:6px;">진형 배치</div>
-                                    <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:4px;">
-                                        ${atk.formation.split(',').map((char, idx) => `
-                                            <div style="background:rgba(59,130,246,0.1); border:1px solid #3b82f6; border-radius:6px; padding:6px; text-align:center; font-size:10px; color:#60a5fa;">
-                                                ${char.trim() || '_'}
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                                ` : ''}
 
                                 ${atk.detail ? `
                                 <div style="font-size:11px; color:#9ca3af; margin-top:8px; padding:8px; background:rgba(0,0,0,0.2); border-radius:6px; white-space:pre-wrap;">${atk.detail}</div>
@@ -213,12 +201,20 @@ function renderGuildDefenseList(searchQuery = '') {
                                 </div>
                                 ` : ''}
 
-                                <button
-                                    onclick="showRecordWinPage('${key}', '${atkKey}', '${(def.name || '').replace(/'/g, "\\'")}')"
-                                    style="width:100%; margin-top:10px; background:#2563eb; color:white; border:none; border-radius:6px; padding:8px; font-size:12px; cursor:pointer; font-weight:700;"
-                                >
-                                    📝 승리 기록하기
-                                </button>
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">
+                                    <button
+                                        onclick="event.stopPropagation(); recordResult('${key}', '${atkKey}', 'win')"
+                                        style="padding:10px; background:rgba(46,204,113,0.15); border:1.5px solid #2ecc71; border-radius:8px; color:#2ecc71; cursor:pointer; font-size:14px; font-weight:700;"
+                                    >
+                                        🏆 승리
+                                    </button>
+                                    <button
+                                        onclick="event.stopPropagation(); recordResult('${key}', '${atkKey}', 'lose')"
+                                        style="padding:10px; background:rgba(231,76,60,0.15); border:1.5px solid #e74c3c; border-radius:8px; color:#e74c3c; cursor:pointer; font-size:14px; font-weight:700;"
+                                    >
+                                        💀 패배
+                                    </button>
+                                </div>
                             </div>
                         `).join('')
                     }
@@ -335,7 +331,6 @@ window.showAddAttackDeckPage = function(defenseKey, defenseName) {
     if (!main) return;
 
     state.attackLogResult = null;
-    state.selectedFormation = ['', '', '', '', ''];
 
     main.innerHTML = `
         <div class="card">
@@ -349,23 +344,6 @@ window.showAddAttackDeckPage = function(defenseKey, defenseName) {
             <!-- 덱 이름 -->
             <label style="color:#9ca3af; font-size:14px;">덱 이름</label>
             <input type="text" id="newDeckName" placeholder="예: 라드그리드 트루드 엘리시아" style="background:#374151; color:white; border:1px solid #4b5563;" />
-
-            <!-- 진형 배치 -->
-            <label style="color:#9ca3af; font-size:14px; margin-top:15px; display:block;">진형 배치 (5슬롯)</label>
-            <div id="formationGrid" style="display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-top:10px;">
-                ${[0,1,2,3,4].map(idx => `
-                    <div style="position:relative;">
-                        <select
-                            id="formSlot${idx}"
-                            onchange="updateFormationSlot(${idx})"
-                            style="width:100%; padding:10px; background:#374151; border:1px solid #4b5563; border-radius:8px; color:white; font-size:11px;"
-                        >
-                            <option value="">슬롯 ${idx + 1}</option>
-                            ${state.guildCharacters.map(char => `<option value="${char}">${char}</option>`).join('')}
-                        </select>
-                    </div>
-                `).join('')}
-            </div>
 
             <!-- 승/패 선택 -->
             <label style="color:#9ca3af; font-size:14px; margin-top:15px; display:block;">승/패 결과</label>
@@ -406,13 +384,6 @@ window.showAddAttackDeckPage = function(defenseKey, defenseName) {
     `;
 };
 
-window.updateFormationSlot = function(idx) {
-    const select = document.getElementById(`formSlot${idx}`);
-    if (select) {
-        state.selectedFormation[idx] = select.value;
-    }
-};
-
 window.selectAttackResult = function(result) {
     state.attackLogResult = result;
     const winBtn = document.getElementById('selectWinBtn');
@@ -443,7 +414,6 @@ window.saveNewAttackDeck = async function(defenseKey) {
 
     const name = document.getElementById('newDeckName').value.trim();
     const detail = document.getElementById('newDeckDetail').value.trim();
-    const formation = state.selectedFormation.join(',');
 
     if (!name) { alert('덱 이름을 입력하세요.'); return; }
     if (!state.attackLogResult) { alert('승/패 결과를 선택하세요.'); return; }
@@ -483,7 +453,6 @@ window.saveNewAttackDeck = async function(defenseKey) {
                 win: (existing.win || 0) + (state.attackLogResult === 'win' ? 1 : 0),
                 lose: (existing.lose || 0) + (state.attackLogResult === 'lose' ? 1 : 0),
                 detail: detail || existing.detail || '',
-                formation: formation || existing.formation || '',
                 logs: [...(existing.logs || []), newLog]
             };
         } else {
@@ -493,7 +462,6 @@ window.saveNewAttackDeck = async function(defenseKey) {
                 win: state.attackLogResult === 'win' ? 1 : 0,
                 lose: state.attackLogResult === 'lose' ? 1 : 0,
                 detail: detail,
-                formation: formation,
                 logs: [newLog]
             };
         }
@@ -579,6 +547,49 @@ window.selectRecordResult = function(result) {
         winBtn.style.borderColor = '#4b5563';
         winBtn.style.background = '#374151';
         winBtn.style.color = '#9ca3af';
+    }
+};
+
+// 목록에서 바로 승/패 기록
+window.recordResult = async function(defenseKey, attackKey, result) {
+    const label = result === 'win' ? '🏆 승리' : '💀 패배';
+    if (!confirm(`${label}를 기록할까요?`)) return;
+
+    try {
+        const defenseRef = doc(db, "defenseTeams", defenseKey);
+        const defenseDoc = await getDoc(defenseRef);
+
+        if (!defenseDoc.exists()) { alert('방어팀을 찾을 수 없습니다.'); return; }
+
+        const defenseData = defenseDoc.data();
+        const attackTeams = defenseData.attackTeams || {};
+        const attack = attackTeams[attackKey];
+
+        if (!attack) { alert('공격 덱을 찾을 수 없습니다.'); return; }
+
+        const newLog = {
+            nick: state.currentUser || '사용자',
+            result: result,
+            date: new Date().toISOString().slice(0, 10),
+            time: Date.now()
+        };
+
+        attackTeams[attackKey] = {
+            ...attack,
+            win: (attack.win || 0) + (result === 'win' ? 1 : 0),
+            lose: (attack.lose || 0) + (result === 'lose' ? 1 : 0),
+            logs: [...(attack.logs || []), newLog]
+        };
+
+        await updateDoc(defenseRef, { attackTeams: attackTeams });
+
+        alert(`${label} 기록 완료!`);
+        await loadGuildDefenseData();
+        renderGuildDefenseList(document.getElementById('guildAttackSearch')?.value || '');
+
+    } catch (error) {
+        console.error("기록 실패:", error);
+        alert('기록에 실패했습니다: ' + error.message);
     }
 };
 
