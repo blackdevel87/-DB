@@ -6,7 +6,171 @@
 
 <title>티니핑 길드 DB</title>
 
-<link rel="stylesheet" href="css/style.css" />
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial,sans-serif;
+    background:#111827;
+    color:white;
+}
+
+.login-screen{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.95);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+}
+
+.login-box{
+    width:320px;
+    background:#1f2937;
+    padding:30px;
+    border-radius:16px;
+    text-align:center;
+}
+
+.login-box h1{
+    margin-bottom:20px;
+}
+
+.login-box input{
+    width:100%;
+    padding:12px;
+    margin-bottom:10px;
+    border:none;
+    border-radius:8px;
+}
+
+.login-box button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    background:#2563eb;
+    color:white;
+    cursor:pointer;
+    font-size:16px;
+}
+
+.layout{
+    display:flex;
+    min-height:100vh;
+}
+
+.sidebar{
+    width:250px;
+    background:#1f2937;
+    padding:20px;
+}
+
+.sidebar h1{
+    margin-bottom:10px;
+}
+
+.sidebar p{
+    color:#9ca3af;
+    margin-bottom:20px;
+}
+
+.menu button{
+    width:100%;
+    margin-bottom:10px;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    background:#374151;
+    color:white;
+    cursor:pointer;
+}
+
+.main{
+    flex:1;
+    padding:30px;
+}
+
+.card{
+    background:#1f2937;
+    padding:20px;
+    border-radius:16px;
+    margin-bottom:20px;
+}
+
+.admin-only{
+    display:none;
+}
+
+input,
+textarea,
+select{
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+    border:none;
+    border-radius:8px;
+}
+
+textarea{
+    min-height:120px;
+}
+
+.save-btn{
+    margin-top:10px;
+    background:#dc2626;
+    color:white;
+    border:none;
+    padding:10px 16px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.quick-btn{
+    background:#2563eb;
+    color:white;
+    border:none;
+    border-radius:14px;
+    padding:18px;
+    font-size:16px;
+    cursor:pointer;
+    text-align:left;
+}
+
+.quick-btn:hover{
+    background:#1d4ed8;
+}
+
+/* PVE 탭 버튼 */
+.pve-tab-btn {
+    padding: 9px 16px;
+    border-radius: 9px;
+    border: 1px solid #4b5563;
+    background: #374151;
+    color: #9ca3af;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+}
+
+.pve-tab-btn:hover {
+    border-color: #6b7280;
+    color: #e5e7eb;
+}
+
+.active-pve {
+    background: rgba(37,99,235,0.15) !important;
+    border-color: #3b82f6 !important;
+    color: #60a5fa !important;
+}
+</style>
 </head>
 
 <body>
@@ -261,8 +425,1910 @@
 </div>
 
 
-<!-- Firebase + App Modules -->
-<script type="module" src="js/main.js"></script>
+<!-- Firebase + App (single file) -->
+<script type="module">
+
+// ==========================================================
+// Firebase SDK (CDN)
+// ==========================================================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+    getAuth,
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut,
+    createUserWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+    getFirestore,
+    doc,
+    setDoc,
+    getDoc,
+    collection,
+    addDoc,
+    getDocs,
+    query,
+    orderBy,
+    limit,
+    serverTimestamp,
+    updateDoc,
+    deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+// ==========================================================
+// 공통 state
+// ==========================================================
+const state = {
+    currentUser: null,
+    currentRole: "member",
+
+    users: {
+        "쏘지": {
+            role: "admin"
+        }
+    },
+
+    guildDefenseData: {},
+    guildCharacters: [
+        "라드그리드", "트루드", "엘리시아", "카일", "카라크", "브&", "초선",
+        "루디", "에반", "겔리두스", "스파이크", "없는팀", "기타"
+    ],
+
+    attackLogResult: null,
+    selectedFormation: ['', '', '', '', '']
+};
+
+const adminAccounts = [
+    "쏘지",
+    "파멸이당"
+];
+
+
+// ==========================================================
+// Firebase 초기화
+// ==========================================================
+const firebaseConfig = {
+    apiKey: "AIzaSyBxSY1hztrurOhRYnQH0jMJKJoW6ihjR_Y",
+    authDomain: "tinyping-guild-db.firebaseapp.com",
+    projectId: "tinyping-guild-db",
+    storageBucket: "tinyping-guild-db.firebasestorage.app",
+    messagingSenderId: "204220841547",
+    appId: "1:204220841547:web:3bb3088b49936d4f0457ce"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const secondaryApp = initializeApp(firebaseConfig, "Secondary");
+const secondaryAuth = getAuth(secondaryApp);
+
+
+// ==========================================================
+// 로그인 / 계정관리 (auth)
+// ==========================================================
+
+// 로그인
+window.login = async function(){
+
+    const id =
+        document.getElementById("loginId")
+        .value
+        .trim();
+
+    const code =
+        document.getElementById("loginCode")
+        .value
+        .trim();
+
+    const email = `${id}@tinyping.com`;
+
+    try{
+
+        await signInWithEmailAndPassword(
+            auth,
+            email,
+            code
+        );
+
+    }
+    catch(error){
+
+        document.getElementById("loginMessage")
+        .innerText =
+        "아이디 또는 비밀번호가 틀렸습니다.";
+
+    }
+
+};
+
+
+// 로그인 유지
+onAuthStateChanged(auth,(user)=>{
+
+    if(user){
+
+        const id =
+            user.email.split("@")[0];
+
+        state.currentUser = id;
+
+        state.currentRole = resolveRole(id);
+
+        document.getElementById(
+            "loginScreen"
+        ).style.display = "none";
+
+        updateRoleUI();
+
+    }
+    else{
+
+        document.getElementById(
+            "loginScreen"
+        ).style.display = "flex";
+
+    }
+
+});
+
+
+// 로그아웃
+window.logout = async function(){
+
+    await signOut(auth);
+
+    location.reload();
+
+};
+
+
+// 권한 판정 — Firebase users 의 role 우선, fallback 으로 adminAccounts (부트스트랩 보호)
+function resolveRole(id){
+
+    if(state.users[id] && state.users[id].role === "admin"){
+        return "admin";
+    }
+
+    if(adminAccounts.includes(id)){
+        return "admin";
+    }
+
+    return "member";
+
+}
+
+
+// UI 업데이트
+function updateRoleUI(){
+
+    const roleName =
+        document.getElementById("roleName");
+
+    roleName.innerText =
+        state.currentRole === "admin"
+        ? "👑 관리자"
+        : "👤 길드원";
+
+
+    const adminItems =
+        document.querySelectorAll(".admin-only");
+
+    adminItems.forEach(item=>{
+
+        item.style.display =
+            state.currentRole === "admin"
+            ? "block"
+            : "none";
+
+    });
+
+
+    renderUserList();
+
+}
+
+
+// 인원관리 열기
+window.showMemberTab = function(){
+
+    document.getElementById(
+        "memberManageTab"
+    ).style.display = "block";
+
+};
+
+
+// 계정 생성
+window.addUser = async function(){
+
+    if(state.currentRole !== "admin"){
+
+        alert("관리자만 가능합니다.");
+        return;
+
+    }
+
+    const id =
+        document.getElementById("newUserId")
+        .value
+        .trim();
+
+    const password =
+        document.getElementById("newUserCode")
+        .value
+        .trim();
+
+    const role =
+        document.getElementById("newUserRole")
+        .value;
+
+    if(!id || !password){
+
+        alert("아이디와 비밀번호를 모두 입력해주세요.");
+        return;
+
+    }
+
+    if(password.length < 6){
+
+        alert("비밀번호는 6자리 이상이어야 합니다.");
+        return;
+
+    }
+
+    if(state.users[id]){
+
+        alert("이미 존재하는 계정입니다.");
+        return;
+
+    }
+
+    const email = `${id}@tinyping.com`;
+
+    try{
+
+        await createUserWithEmailAndPassword(
+            secondaryAuth,
+            email,
+            password
+        );
+
+        state.users[id] = {
+            role: role
+        };
+
+        saveUsers();
+
+        renderUserList();
+
+        document.getElementById("newUserId").value = "";
+
+        document.getElementById("newUserCode").value = "";
+
+        alert("Firebase 계정 생성 완료!");
+
+    }
+    catch(error){
+
+        console.log(error);
+
+        if(error.code === "auth/email-already-in-use"){
+
+            alert("이미 Firebase에 등록된 아이디입니다.");
+
+        }
+        else if(error.code === "auth/weak-password"){
+
+            alert("비밀번호는 6자리 이상이어야 합니다.");
+
+        }
+        else{
+
+            alert("계정 생성 중 오류가 발생했습니다.");
+
+        }
+
+    }
+
+};
+
+
+// 계정 삭제
+window.deleteUser = function(id){
+
+    if(id === state.currentUser){
+
+        alert("현재 로그인 계정은 삭제 불가");
+        return;
+
+    }
+
+    delete state.users[id];
+
+    saveUsers();
+
+    renderUserList();
+
+};
+
+
+// users 저장
+async function saveUsers(){
+
+    await setDoc(
+
+        doc(db, "guild", "users"),
+
+        {
+            users: state.users
+        }
+
+    );
+
+}
+
+
+// users 불러오기
+async function loadUsers(){
+
+    const docRef = doc(db, "guild", "users");
+
+    const docSnap = await getDoc(docRef);
+
+    if(docSnap.exists()){
+
+        state.users = docSnap.data().users;
+
+    }
+
+    // users 로드 시점에 이미 로그인된 상태면 role 재판정 (race condition 보정)
+    if(state.currentUser){
+
+        state.currentRole = resolveRole(state.currentUser);
+
+        updateRoleUI();
+
+    }
+    else{
+
+        renderUserList();
+
+    }
+
+}
+
+
+// 유저 목록 출력
+function renderUserList(){
+
+    const userList =
+        document.getElementById("userList");
+
+    userList.innerHTML = "";
+
+    Object.keys(state.users).forEach(id=>{
+
+        const user = state.users[id];
+
+        const row =
+            document.createElement("div");
+
+        row.style.cssText =
+            "display:flex;justify-content:space-between;align-items:center;background:#374151;padding:12px;border-radius:10px;margin-bottom:8px;";
+
+        row.innerHTML = `
+
+            <div>
+
+                <strong>${id}</strong><br>
+
+                <span style="font-size:13px;color:#d1d5db;">
+
+                    권한 :
+                    ${user.role === "admin"
+                        ? "관리자"
+                        : "길드원"}
+
+                </span>
+
+            </div>
+
+            <button
+                onclick="deleteUser('${id}')"
+                style="
+                    background:#dc2626;
+                    color:white;
+                    border:none;
+                    border-radius:8px;
+                    padding:8px 10px;
+                    cursor:pointer;
+                "
+            >
+                삭제
+            </button>
+
+        `;
+
+        userList.appendChild(row);
+
+    });
+
+}
+
+
+// ==========================================================
+// 공지사항 (notice)
+// ==========================================================
+
+window.saveNotice = async function(){
+
+    if(state.currentRole !== "admin"){
+        alert("관리자만 공지 등록이 가능합니다.");
+        return;
+    }
+
+    const title = document.getElementById("noticeTitle").value.trim();
+    const content = document.getElementById("noticeContent").value.trim();
+
+    if(!title || !content){
+        alert("공지 제목과 내용을 모두 입력해주세요.");
+        return;
+    }
+
+    await addDoc(collection(db, "notices"), {
+        title: title,
+        content: content,
+        writer: state.currentUser,
+        createdAt: serverTimestamp()
+    });
+
+    document.getElementById("noticeTitle").value = "";
+    document.getElementById("noticeContent").value = "";
+
+    alert("공지사항이 등록되었습니다.");
+
+};
+
+async function loadNotices(){
+
+    const noticeList = document.getElementById("noticeList");
+
+    noticeList.innerHTML = "";
+
+    const q = query(
+        collection(db, "notices"),
+        orderBy("createdAt", "desc"),
+        limit(3)
+    );
+
+    const querySnapshot = await getDocs(q);
+
+    querySnapshot.forEach((docItem) => {
+
+        const notice = docItem.data();
+
+        const createdDate =
+            notice.createdAt?.toDate?.().toLocaleDateString()
+            || "날짜 없음";
+
+        const div = document.createElement("div");
+
+        div.style.background = "#374151";
+        div.style.padding = "15px";
+        div.style.borderRadius = "12px";
+
+        div.style.cursor = "pointer";
+
+        div.onclick = function(){
+            showNoticeDetailPage(docItem.id);
+        };
+
+        div.innerHTML = `
+            <strong>${notice.title}</strong>
+            <div style="font-size:12px; color:#9ca3af; margin-top:4px;">
+                ${createdDate}
+            </div>
+        `;
+
+        noticeList.appendChild(div);
+
+    });
+
+}
+
+window.loadNotices = loadNotices;
+
+window.showNoticePage = function(){
+
+    const main = document.querySelector(".main");
+
+    main.innerHTML = `
+        <div class="card">
+            <h2>📢 공지사항 게시판</h2>
+            <p style="color:#9ca3af; margin-top:8px;">
+                공지 제목을 클릭하면 내용을 볼 수 있습니다.
+            </p>
+
+            <div
+                id="noticeBoardList"
+                style="display:flex; flex-direction:column; gap:12px; margin-top:20px;"
+            ></div>
+
+            ${state.currentRole === "admin" ? `
+                <button
+                    class="save-btn"
+                    onclick="showNoticeWritePage()"
+                    style="margin-top:20px;"
+                >
+                    ✍️ 글쓰기
+                </button>
+            ` : ""}
+        </div>
+    `;
+
+    loadNoticeBoard();
+
+};
+
+
+window.loadNoticeBoard = async function(){
+
+    const noticeBoardList = document.getElementById("noticeBoardList");
+
+    noticeBoardList.innerHTML = "";
+
+    const q = query(
+        collection(db, "notices"),
+        orderBy("createdAt", "desc")
+    );
+
+    const querySnapshot = await getDocs(q);
+
+    if(querySnapshot.empty){
+        noticeBoardList.innerHTML = `
+            <div style="background:#374151; padding:15px; border-radius:12px; color:#9ca3af;">
+                등록된 공지사항이 없습니다.
+            </div>
+        `;
+        return;
+    }
+
+    querySnapshot.forEach((docItem) => {
+
+        const notice = docItem.data();
+
+        const createdDate =
+            notice.createdAt?.toDate?.().toLocaleDateString()
+            || "날짜 없음";
+
+        const div = document.createElement("div");
+
+        div.style.background = "#374151";
+        div.style.padding = "15px";
+        div.style.borderRadius = "12px";
+        div.style.cursor = "pointer";
+
+        div.onclick = function(){
+            showNoticeDetailPage(docItem.id);
+        };
+
+        div.innerHTML = `
+            <strong style="font-size:18px;">${notice.title}</strong>
+            <div style="font-size:12px; color:#9ca3af; margin-top:4px;">
+                ${createdDate} / 작성자: ${notice.writer || "관리자"}
+            </div>
+        `;
+
+        noticeBoardList.appendChild(div);
+
+    });
+
+};
+
+
+window.showNoticeDetailPage = async function(noticeId){
+
+    const docRef = doc(db, "notices", noticeId);
+    const docSnap = await getDoc(docRef);
+
+    if(!docSnap.exists()){
+        alert("공지사항을 찾을 수 없습니다.");
+        showNoticePage();
+        return;
+    }
+
+    const notice = docSnap.data();
+
+    const createdDate =
+        notice.createdAt?.toDate?.().toLocaleDateString()
+        || "날짜 없음";
+
+    const main = document.querySelector(".main");
+
+    main.innerHTML = `
+        <div class="card">
+            <button onclick="showNoticePage()" class="save-btn">
+                ← 목록으로
+            </button>
+
+            <h2 style="margin-top:15px;">${notice.title}</h2>
+
+            <div style="font-size:13px; color:#9ca3af; margin-top:8px;">
+                ${createdDate} / 작성자: ${notice.writer || "관리자"}
+            </div>
+
+            <div style="margin-top:20px; background:#374151; padding:20px; border-radius:12px; white-space:pre-wrap; line-height:1.7;">
+                ${notice.content}
+            </div>
+
+${state.currentRole === "admin" ? `
+<div style="margin-top:20px; display:flex; gap:10px;">
+
+    <button
+        class="save-btn"
+        onclick="editNotice('${noticeId}')"
+    >
+        ✏ 수정
+    </button>
+
+    <button
+        class="save-btn"
+        onclick="deleteNoticeConfirm('${noticeId}')"
+        style="background:#dc2626;"
+    >
+        🗑 삭제
+    </button>
+
+</div>
+` : ""}
+
+        </div>
+    `;
+
+};
+
+
+window.showNoticeWritePage = function(){
+
+    if(state.currentRole !== "admin"){
+        alert("관리자만 글쓰기가 가능합니다.");
+        return;
+    }
+
+    const main = document.querySelector(".main");
+
+    main.innerHTML = `
+        <div class="card">
+            <button onclick="showNoticePage()" class="save-btn">
+                ← 목록으로
+            </button>
+
+            <h2 style="margin-top:15px;">✍ 공지사항 글쓰기</h2>
+
+            <input
+                id="noticeTitle"
+                type="text"
+                placeholder="공지 제목"
+            />
+
+            <textarea
+                id="noticeContent"
+                placeholder="공지 내용을 입력하세요"
+            ></textarea>
+
+            <button class="save-btn" onclick="saveNotice()">
+                등록하기
+            </button>
+        </div>
+    `;
+
+};
+
+window.editNotice = async function(noticeId){
+
+    const docRef = doc(db, "notices", noticeId);
+    const docSnap = await getDoc(docRef);
+
+    if(!docSnap.exists()){
+        alert("공지사항을 찾을 수 없습니다.");
+        showNoticePage();
+        return;
+    }
+
+    const notice = docSnap.data();
+
+    const main = document.querySelector(".main");
+
+    main.innerHTML = `
+        <div class="card">
+            <button onclick="showNoticeDetailPage('${noticeId}')" class="save-btn">
+                ← 돌아가기
+            </button>
+
+            <h2 style="margin-top:15px;">✏ 공지사항 수정</h2>
+
+            <input
+                id="editNoticeTitle"
+                type="text"
+                value="${notice.title}"
+            />
+
+            <textarea id="editNoticeContent">${notice.content}</textarea>
+
+            <button class="save-btn" onclick="updateNotice('${noticeId}')">
+                수정 저장
+            </button>
+        </div>
+    `;
+
+};
+
+
+window.updateNotice = async function(noticeId){
+
+    const title = document.getElementById("editNoticeTitle").value.trim();
+    const content = document.getElementById("editNoticeContent").value.trim();
+
+    if(!title || !content){
+        alert("제목과 내용을 모두 입력해주세요.");
+        return;
+    }
+
+    await updateDoc(doc(db, "notices", noticeId), {
+        title: title,
+        content: content
+    });
+
+    alert("공지사항이 수정되었습니다.");
+
+    showNoticeDetailPage(noticeId);
+
+};
+
+
+window.deleteNoticeConfirm = async function(noticeId){
+
+    if(!confirm("이 공지사항을 삭제할까요?")){
+        return;
+    }
+
+    await deleteDoc(doc(db, "notices", noticeId));
+
+    alert("공지사항이 삭제되었습니다.");
+
+    showNoticePage();
+
+};
+
+
+// ==========================================================
+// 길드전 공격 (guild-attack)
+// ==========================================================
+
+// 1. 메인 페이지
+window.showGuildAttackPage = function() {
+    const main = document.querySelector(".main");
+    if (!main) return;
+
+    const isAdmin = (state.currentRole === 'admin');
+
+    main.innerHTML = `
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div>
+                    <h2 style="margin:0;">⚔️ 길드전 공격 공략</h2>
+                    <p style="color:#9ca3af; margin-top:4px;">상대 방어팀을 검색하여 공격 덱을 확인하세요</p>
+                </div>
+                ${isAdmin ? `
+                <button
+                    onclick="showAddDefensePage()"
+                    style="background:#2563eb; color:white; border:none; border-radius:10px; padding:10px 16px; font-size:14px; font-weight:700; cursor:pointer;"
+                >
+                    + 방어팀 추가
+                </button>
+                ` : ''}
+            </div>
+
+            <input
+                type="text"
+                id="guildAttackSearch"
+                placeholder="방어팀 이름 검색..."
+                style="width:100%; padding:14px; background:#374151; border:1px solid #4b5563; border-radius:12px; color:white; font-size:14px; margin-bottom:20px;"
+            />
+
+            <div id="guildDefenseList">
+                <div style="text-align:center; color:#9ca3af; padding:40px;">데이터를 불러오는 중...</div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('guildAttackSearch').addEventListener('input', (e) => {
+        renderGuildDefenseList(e.target.value);
+    });
+
+    loadGuildDefenseData();
+};
+
+// 2. 데이터 로드
+async function loadGuildDefenseData() {
+    try {
+        const q = query(collection(db, "defenseTeams"));
+        const querySnapshot = await getDocs(q);
+
+        state.guildDefenseData = {};
+        querySnapshot.forEach((docItem) => {
+            state.guildDefenseData[docItem.id] = { ...docItem.data(), id: docItem.id };
+        });
+
+        renderGuildDefenseList();
+    } catch (error) {
+        console.error("데이터 로드 실패:", error);
+        const container = document.getElementById('guildDefenseList');
+        if (container) {
+            container.innerHTML = `<div style="text-align:center; color:#dc2626; padding:40px;">데이터를 불러올 수 없습니다.<br><small>${error.message}</small></div>`;
+        }
+    }
+}
+
+// 3. 퍼지 검색
+function fuzzySearchGuild(query, text) {
+    if (!query) return true;
+    query = query.toLowerCase().replace(/\s/g, '');
+    text = text.toLowerCase().replace(/\s/g, '');
+    if (text.includes(query)) return true;
+    const queryWords = query.split('');
+    let textIndex = 0;
+    for (let char of queryWords) {
+        textIndex = text.indexOf(char, textIndex);
+        if (textIndex === -1) return false;
+        textIndex++;
+    }
+    return true;
+}
+
+// 4. 목록 렌더링
+function renderGuildDefenseList(searchQuery = '') {
+    const container = document.getElementById('guildDefenseList');
+    if (!container) return;
+
+    const isAdmin = (state.currentRole === 'admin');
+
+    const filtered = Object.entries(state.guildDefenseData).filter(([key, def]) =>
+        fuzzySearchGuild(searchQuery, def.name || '')
+    );
+
+    if (filtered.length === 0) {
+        container.innerHTML = `<div style="text-align:center; color:#9ca3af; padding:40px;">${searchQuery ? '검색 결과가 없습니다' : '등록된 방어팀이 없습니다'}</div>`;
+        return;
+    }
+
+    container.innerHTML = filtered.map(([key, def]) => {
+        const attacks = Object.entries(def.attackTeams || {});
+        const totalWin = attacks.reduce((sum, [_, atk]) => sum + (atk.win || 0), 0);
+        const totalLose = attacks.reduce((sum, [_, atk]) => sum + (atk.lose || 0), 0);
+
+        return `
+            <div class="defense-card-guild" data-key="${key}" style="background:#374151; border:1px solid #4b5563; border-radius:12px; padding:16px; margin-bottom:12px; cursor:pointer; transition:all 0.2s;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="flex:1;">
+                        <div style="font-size:16px; font-weight:900; margin-bottom:4px;">${def.name || '이름 없음'}</div>
+                        <div style="font-size:11px; color:#9ca3af;">공격덱 ${attacks.length}개 · 승 ${totalWin} · 패 ${totalLose}</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        ${isAdmin ? `
+                        <button
+                            onclick="event.stopPropagation(); showAddAttackDeckPage('${key}', '${(def.name || '').replace(/'/g, "\\'")}')"
+                            style="background:#2563eb; color:white; border:none; border-radius:8px; padding:6px 12px; font-size:12px; cursor:pointer; font-weight:700;"
+                        >
+                            + 추가
+                        </button>
+                        <button
+                            onclick="event.stopPropagation(); deleteDefenseTeam('${key}', '${(def.name || '').replace(/'/g, "\\'")}')"
+                            style="background:#dc2626; color:white; border:none; border-radius:8px; padding:6px 12px; font-size:12px; cursor:pointer; font-weight:700;"
+                        >
+                            삭제
+                        </button>
+                        ` : ''}
+                        <div class="expand-icon-guild" style="font-size:18px; color:#9ca3af; transition:transform 0.2s;">▼</div>
+                    </div>
+                </div>
+
+                <div class="attack-list-guild" style="margin-top:12px; padding:12px; background:rgba(0,0,0,0.2); border-radius:8px; display:none;">
+                    ${attacks.length === 0 ?
+                        '<div style="color:#9ca3af; text-align:center; padding:10px;">등록된 공격덱이 없습니다</div>' :
+                        attacks.map(([atkKey, atk]) => `
+                            <div style="background:#1f2937; border:1px solid #374151; border-radius:8px; padding:12px; margin-bottom:8px;">
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                                    <div style="flex:1;">
+                                        <div style="font-size:14px; font-weight:700; margin-bottom:6px;">${atk.name || '이름 없음'}</div>
+                                        <div style="display:flex; gap:12px; font-size:11px;">
+                                            <span style="padding:4px 10px; background:rgba(46,204,113,0.15); border-radius:6px; color:#27ae60;">승 ${atk.win || 0}</span>
+                                            <span style="padding:4px 10px; background:rgba(231,76,60,0.15); border-radius:6px; color:#e74c3c;">패 ${atk.lose || 0}</span>
+                                        </div>
+                                    </div>
+                                    ${isAdmin ? `
+                                    <button
+                                        onclick="deleteAttackDeck('${key}', '${atkKey}', '${(atk.name || '').replace(/'/g, "\\'")}')"
+                                        style="background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 10px; font-size:11px; cursor:pointer;"
+                                    >
+                                        삭제
+                                    </button>
+                                    ` : ''}
+                                </div>
+
+
+                                ${atk.detail ? `
+                                <div style="font-size:11px; color:#9ca3af; margin-top:8px; padding:8px; background:rgba(0,0,0,0.2); border-radius:6px; white-space:pre-wrap;">${atk.detail}</div>
+                                ` : ''}
+
+                                ${atk.logs && atk.logs.length > 0 ? `
+                                <div style="margin-top:10px; padding-top:10px; border-top:1px solid #374151;">
+                                    <div style="font-size:11px; color:#9ca3af; margin-bottom:6px;">최근 전적 (${atk.logs.length}건)</div>
+                                    <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                                        ${atk.logs.slice(0, 10).map(log => `
+                                            <span style="
+                                                width:18px;
+                                                height:18px;
+                                                display:inline-flex;
+                                                align-items:center;
+                                                justify-content:center;
+                                                border-radius:4px;
+                                                font-size:10px;
+                                                font-weight:700;
+                                                background:${log.result === 'win' ? 'rgba(46,204,113,0.2)' : 'rgba(231,76,60,0.2)'};
+                                                color:${log.result === 'win' ? '#27ae60' : '#e74c3c'};
+                                            " title="${log.nick} · ${log.date}">
+                                                ${log.result === 'win' ? 'W' : 'L'}
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                ` : ''}
+
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">
+                                    <button
+                                        onclick="event.stopPropagation(); recordResult('${key}', '${atkKey}', 'win')"
+                                        style="padding:10px; background:rgba(46,204,113,0.15); border:1.5px solid #2ecc71; border-radius:8px; color:#2ecc71; cursor:pointer; font-size:14px; font-weight:700;"
+                                    >
+                                        🏆 승리
+                                    </button>
+                                    <button
+                                        onclick="event.stopPropagation(); recordResult('${key}', '${atkKey}', 'lose')"
+                                        style="padding:10px; background:rgba(231,76,60,0.15); border:1.5px solid #e74c3c; border-radius:8px; color:#e74c3c; cursor:pointer; font-size:14px; font-weight:700;"
+                                    >
+                                        💀 패배
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')
+                    }
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    document.querySelectorAll('.defense-card-guild').forEach(card => {
+        card.addEventListener('click', function() {
+            const isExpanded = this.classList.contains('expanded');
+            document.querySelectorAll('.defense-card-guild').forEach(c => {
+                c.classList.remove('expanded');
+                c.querySelector('.attack-list-guild').style.display = 'none';
+                c.querySelector('.expand-icon-guild').style.transform = 'rotate(0deg)';
+                c.style.borderColor = '#4b5563';
+            });
+            if (!isExpanded) {
+                this.classList.add('expanded');
+                this.querySelector('.attack-list-guild').style.display = 'block';
+                this.querySelector('.expand-icon-guild').style.transform = 'rotate(180deg)';
+                this.style.borderColor = '#3b82f6';
+            }
+        });
+        card.addEventListener('mouseenter', function() {
+            if (!this.classList.contains('expanded')) this.style.background = '#4b5563';
+        });
+        card.addEventListener('mouseleave', function() {
+            if (!this.classList.contains('expanded')) this.style.background = '#374151';
+        });
+    });
+}
+
+// 5. 방어팀 추가 (관리자 전용)
+window.showAddDefensePage = function() {
+    if (state.currentRole !== 'admin') {
+        alert('관리자만 방어팀을 추가할 수 있습니다.');
+        return;
+    }
+
+    const main = document.querySelector(".main");
+    if (!main) return;
+
+    main.innerHTML = `
+        <div class="card">
+            <button onclick="showGuildAttackPage()" class="save-btn" style="background:#6b7280;">← 목록으로</button>
+            <h2 style="margin-top:15px;">🛡️ 방어팀 추가</h2>
+            <p style="color:#9ca3af; margin-top:8px;">새로운 상대 방어팀을 등록합니다</p>
+            <hr style="margin:20px 0; border-color:#374151;">
+            <label style="color:#9ca3af; font-size:14px;">방어팀 이름</label>
+            <input type="text" id="newDefenseName" placeholder="예: 카일 카라크 브&" style="background:#374151; color:white; border:1px solid #4b5563;" />
+            <button onclick="saveNewDefense()" class="save-btn" style="width:100%; margin-top:20px; background:#2563eb; font-size:16px; padding:14px;">💾 등록하기</button>
+        </div>
+    `;
+};
+
+window.saveNewDefense = async function() {
+    if (state.currentRole !== 'admin') {
+        alert('관리자만 방어팀을 추가할 수 있습니다.');
+        return;
+    }
+
+    const nameInput = document.getElementById('newDefenseName');
+    if (!nameInput) return;
+    const name = nameInput.value.trim();
+    if (!name) { alert('방어팀 이름을 입력하세요.'); return; }
+    try {
+        await addDoc(collection(db, "defenseTeams"), { name: name, attackTeams: {} });
+        alert('방어팀이 등록되었습니다! ✅');
+        await loadGuildDefenseData();
+        showGuildAttackPage();
+    } catch (error) {
+        console.error("저장 실패:", error);
+        alert('저장에 실패했습니다: ' + error.message);
+    }
+};
+
+// 6. 방어팀 삭제 (관리자 전용)
+window.deleteDefenseTeam = async function(defenseKey, defenseName) {
+    if (state.currentRole !== 'admin') {
+        alert('관리자만 방어팀을 삭제할 수 있습니다.');
+        return;
+    }
+
+    if (!confirm(`"${defenseName}" 방어팀을 완전히 삭제하시겠습니까?\n(모든 공격 덱도 함께 삭제됩니다)`)) return;
+
+    try {
+        const defenseRef = doc(db, "defenseTeams", defenseKey);
+        await deleteDoc(defenseRef);
+
+        alert('삭제되었습니다.');
+        await loadGuildDefenseData();
+        renderGuildDefenseList();
+    } catch (error) {
+        console.error("삭제 실패:", error);
+        alert('삭제에 실패했습니다: ' + error.message);
+    }
+};
+
+// 7. 공격 덱 추가 (관리자 전용 + 진형 배치)
+window.showAddAttackDeckPage = function(defenseKey, defenseName) {
+    if (state.currentRole !== 'admin') {
+        alert('관리자만 공격 덱을 추가할 수 있습니다.');
+        return;
+    }
+
+    const main = document.querySelector(".main");
+    if (!main) return;
+
+    state.attackLogResult = null;
+
+    main.innerHTML = `
+        <div class="card">
+            <button onclick="showGuildAttackPage()" class="save-btn" style="background:#6b7280;">← 목록으로</button>
+
+            <h2 style="margin-top:15px;">⚔️ 공격 덱 등록</h2>
+            <p style="color:#9ca3af; margin-top:8px;">방어팀: <strong>${defenseName}</strong></p>
+
+            <hr style="margin:20px 0; border-color:#374151;">
+
+            <!-- 덱 이름 -->
+            <label style="color:#9ca3af; font-size:14px;">덱 이름</label>
+            <input type="text" id="newDeckName" placeholder="예: 라드그리드 트루드 엘리시아" style="background:#374151; color:white; border:1px solid #4b5563;" />
+
+            <!-- 승/패 선택 -->
+            <label style="color:#9ca3af; font-size:14px; margin-top:15px; display:block;">승/패 결과</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+                <button
+                    id="selectWinBtn"
+                    onclick="selectAttackResult('win')"
+                    style="padding:12px; background:#374151; border:1px solid #4b5563; border-radius:8px; color:#9ca3af; cursor:pointer; font-size:14px; font-weight:700; transition:all 0.2s;"
+                >
+                    ✅ 승리
+                </button>
+                <button
+                    id="selectLoseBtn"
+                    onclick="selectAttackResult('lose')"
+                    style="padding:12px; background:#374151; border:1px solid #4b5563; border-radius:8px; color:#9ca3af; cursor:pointer; font-size:14px; font-weight:700; transition:all 0.2s;"
+                >
+                    💀 패배
+                </button>
+            </div>
+
+            <!-- 상세 정보 -->
+            <label style="color:#9ca3af; font-size:14px; margin-top:15px; display:block;">상세 정보 (선택)</label>
+            <textarea
+                id="newDeckDetail"
+                placeholder="예: 라드 5부활 이상, 트루드 겔리두스, 엘리 부활"
+                style="background:#374151; color:white; border:1px solid #4b5563; min-height:80px; resize:vertical;"
+            ></textarea>
+
+            <!-- 저장 버튼 -->
+            <button
+                onclick="saveNewAttackDeck('${defenseKey}')"
+                class="save-btn"
+                style="width:100%; margin-top:20px; background:#2563eb; font-size:16px; padding:14px;"
+            >
+                💾 등록하기
+            </button>
+        </div>
+    `;
+};
+
+window.selectAttackResult = function(result) {
+    state.attackLogResult = result;
+    const winBtn = document.getElementById('selectWinBtn');
+    const loseBtn = document.getElementById('selectLoseBtn');
+
+    if (result === 'win') {
+        winBtn.style.borderColor = '#2ecc71';
+        winBtn.style.background = 'rgba(46,204,113,0.15)';
+        winBtn.style.color = '#2ecc71';
+        loseBtn.style.borderColor = '#4b5563';
+        loseBtn.style.background = '#374151';
+        loseBtn.style.color = '#9ca3af';
+    } else {
+        loseBtn.style.borderColor = '#e74c3c';
+        loseBtn.style.background = 'rgba(231,76,60,0.15)';
+        loseBtn.style.color = '#e74c3c';
+        winBtn.style.borderColor = '#4b5563';
+        winBtn.style.background = '#374151';
+        winBtn.style.color = '#9ca3af';
+    }
+};
+
+window.saveNewAttackDeck = async function(defenseKey) {
+    if (state.currentRole !== 'admin') {
+        alert('관리자만 공격 덱을 추가할 수 있습니다.');
+        return;
+    }
+
+    const name = document.getElementById('newDeckName').value.trim();
+    const detail = document.getElementById('newDeckDetail').value.trim();
+
+    if (!name) { alert('덱 이름을 입력하세요.'); return; }
+    if (!state.attackLogResult) { alert('승/패 결과를 선택하세요.'); return; }
+
+    try {
+        const defenseRef = doc(db, "defenseTeams", defenseKey);
+        const defenseDoc = await getDoc(defenseRef);
+
+        if (!defenseDoc.exists()) { alert('방어팀을 찾을 수 없습니다.'); return; }
+
+        const defenseData = defenseDoc.data();
+        const attackTeams = defenseData.attackTeams || {};
+
+        // 현재 사용자 닉네임
+        const userNick = state.currentUser || '관리자';
+
+        // 로그 데이터
+        const newLog = {
+            nick: userNick,
+            result: state.attackLogResult,
+            date: new Date().toISOString().slice(0, 10),
+            time: Date.now()
+        };
+
+        let existingKey = null;
+        for (const [key, atk] of Object.entries(attackTeams)) {
+            if (atk.name === name) {
+                existingKey = key;
+                break;
+            }
+        }
+
+        if (existingKey) {
+            const existing = attackTeams[existingKey];
+            attackTeams[existingKey] = {
+                name: name,
+                win: (existing.win || 0) + (state.attackLogResult === 'win' ? 1 : 0),
+                lose: (existing.lose || 0) + (state.attackLogResult === 'lose' ? 1 : 0),
+                detail: detail || existing.detail || '',
+                logs: [...(existing.logs || []), newLog]
+            };
+        } else {
+            const newId = 'atk_' + Date.now();
+            attackTeams[newId] = {
+                name: name,
+                win: state.attackLogResult === 'win' ? 1 : 0,
+                lose: state.attackLogResult === 'lose' ? 1 : 0,
+                detail: detail,
+                logs: [newLog]
+            };
+        }
+
+        await updateDoc(defenseRef, { attackTeams: attackTeams });
+
+        alert(`공격 덱이 등록되었습니다! ${state.attackLogResult === 'win' ? '🏆 승리' : '💀 패배'}`);
+
+        await loadGuildDefenseData();
+        showGuildAttackPage();
+
+    } catch (error) {
+        console.error("저장 실패:", error);
+        alert('저장에 실패했습니다: ' + error.message);
+    }
+};
+
+// 8. 승리 기록 페이지
+window.showRecordWinPage = function(defenseKey, attackKey, defenseName) {
+    const main = document.querySelector(".main");
+    if (!main) return;
+
+    state.attackLogResult = null;
+
+    main.innerHTML = `
+        <div class="card">
+            <button onclick="showGuildAttackPage()" class="save-btn" style="background:#6b7280;">← 목록으로</button>
+
+            <h2 style="margin-top:15px;">📝 승리 기록</h2>
+            <p style="color:#9ca3af; margin-top:8px;">방어팀: <strong>${defenseName}</strong></p>
+
+            <hr style="margin:20px 0; border-color:#374151;">
+
+            <!-- 승/패 선택 -->
+            <label style="color:#9ca3af; font-size:14px;">전투 결과</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+                <button
+                    id="recordWinBtn"
+                    onclick="selectRecordResult('win')"
+                    style="padding:14px; background:#374151; border:1px solid #4b5563; border-radius:8px; color:#9ca3af; cursor:pointer; font-size:16px; font-weight:700; transition:all 0.2s;"
+                >
+                    ✅ 승리
+                </button>
+                <button
+                    id="recordLoseBtn"
+                    onclick="selectRecordResult('lose')"
+                    style="padding:14px; background:#374151; border:1px solid #4b5563; border-radius:8px; color:#9ca3af; cursor:pointer; font-size:16px; font-weight:700; transition:all 0.2s;"
+                >
+                    💀 패배
+                </button>
+            </div>
+
+            <!-- 기록 버튼 -->
+            <button
+                onclick="saveWinRecord('${defenseKey}', '${attackKey}')"
+                class="save-btn"
+                style="width:100%; margin-top:20px; background:#2563eb; font-size:16px; padding:14px;"
+            >
+                💾 기록하기
+            </button>
+        </div>
+    `;
+};
+
+window.selectRecordResult = function(result) {
+    state.attackLogResult = result;
+    const winBtn = document.getElementById('recordWinBtn');
+    const loseBtn = document.getElementById('recordLoseBtn');
+
+    if (result === 'win') {
+        winBtn.style.borderColor = '#2ecc71';
+        winBtn.style.background = 'rgba(46,204,113,0.15)';
+        winBtn.style.color = '#2ecc71';
+        loseBtn.style.borderColor = '#4b5563';
+        loseBtn.style.background = '#374151';
+        loseBtn.style.color = '#9ca3af';
+    } else {
+        loseBtn.style.borderColor = '#e74c3c';
+        loseBtn.style.background = 'rgba(231,76,60,0.15)';
+        loseBtn.style.color = '#e74c3c';
+        winBtn.style.borderColor = '#4b5563';
+        winBtn.style.background = '#374151';
+        winBtn.style.color = '#9ca3af';
+    }
+};
+
+// 목록에서 바로 승/패 기록
+window.recordResult = async function(defenseKey, attackKey, result) {
+    const label = result === 'win' ? '🏆 승리' : '💀 패배';
+    if (!confirm(`${label}를 기록할까요?`)) return;
+
+    try {
+        const defenseRef = doc(db, "defenseTeams", defenseKey);
+        const defenseDoc = await getDoc(defenseRef);
+
+        if (!defenseDoc.exists()) { alert('방어팀을 찾을 수 없습니다.'); return; }
+
+        const defenseData = defenseDoc.data();
+        const attackTeams = defenseData.attackTeams || {};
+        const attack = attackTeams[attackKey];
+
+        if (!attack) { alert('공격 덱을 찾을 수 없습니다.'); return; }
+
+        const newLog = {
+            nick: state.currentUser || '사용자',
+            result: result,
+            date: new Date().toISOString().slice(0, 10),
+            time: Date.now()
+        };
+
+        attackTeams[attackKey] = {
+            ...attack,
+            win: (attack.win || 0) + (result === 'win' ? 1 : 0),
+            lose: (attack.lose || 0) + (result === 'lose' ? 1 : 0),
+            logs: [...(attack.logs || []), newLog]
+        };
+
+        await updateDoc(defenseRef, { attackTeams: attackTeams });
+
+        alert(`${label} 기록 완료!`);
+        await loadGuildDefenseData();
+        renderGuildDefenseList(document.getElementById('guildAttackSearch')?.value || '');
+
+    } catch (error) {
+        console.error("기록 실패:", error);
+        alert('기록에 실패했습니다: ' + error.message);
+    }
+};
+
+window.saveWinRecord = async function(defenseKey, attackKey) {
+    if (!state.attackLogResult) { alert('승/패 결과를 선택하세요.'); return; }
+
+    try {
+        const defenseRef = doc(db, "defenseTeams", defenseKey);
+        const defenseDoc = await getDoc(defenseRef);
+
+        if (!defenseDoc.exists()) { alert('방어팀을 찾을 수 없습니다.'); return; }
+
+        const defenseData = defenseDoc.data();
+        const attackTeams = defenseData.attackTeams || {};
+        const attack = attackTeams[attackKey];
+
+        if (!attack) { alert('공격 덱을 찾을 수 없습니다.'); return; }
+
+        const userNick = state.currentUser || '사용자';
+
+        const newLog = {
+            nick: userNick,
+            result: state.attackLogResult,
+            date: new Date().toISOString().slice(0, 10),
+            time: Date.now()
+        };
+
+        attackTeams[attackKey] = {
+            ...attack,
+            win: (attack.win || 0) + (state.attackLogResult === 'win' ? 1 : 0),
+            lose: (attack.lose || 0) + (state.attackLogResult === 'lose' ? 1 : 0),
+            logs: [...(attack.logs || []), newLog]
+        };
+
+        await updateDoc(defenseRef, { attackTeams: attackTeams });
+
+        alert(`${state.attackLogResult === 'win' ? '🏆 승리' : '💀 패배'} 기록되었습니다!`);
+
+        await loadGuildDefenseData();
+        showGuildAttackPage();
+
+    } catch (error) {
+        console.error("기록 실패:", error);
+        alert('기록에 실패했습니다: ' + error.message);
+    }
+};
+
+// 9. 공격 덱 삭제 (관리자 전용)
+window.deleteAttackDeck = async function(defenseKey, attackKey, deckName) {
+    if (state.currentRole !== 'admin') {
+        alert('관리자만 공격 덱을 삭제할 수 있습니다.');
+        return;
+    }
+
+    if (!confirm(`"${deckName}" 덱을 삭제하시겠습니까?`)) return;
+
+    try {
+        const defenseRef = doc(db, "defenseTeams", defenseKey);
+        const defenseDoc = await getDoc(defenseRef);
+
+        if (!defenseDoc.exists()) { alert('방어팀을 찾을 수 없습니다.'); return; }
+
+        const defenseData = defenseDoc.data();
+        const attackTeams = defenseData.attackTeams || {};
+        delete attackTeams[attackKey];
+
+        await updateDoc(defenseRef, { attackTeams: attackTeams });
+
+        alert('삭제되었습니다.');
+        await loadGuildDefenseData();
+        renderGuildDefenseList();
+
+    } catch (error) {
+        console.error("삭제 실패:", error);
+        alert('삭제에 실패했습니다: ' + error.message);
+    }
+};
+
+
+// ==========================================================
+// PVE 공략 (pve)
+// ==========================================================
+
+// 상태
+let pveData = {};
+let currentStageId = null;
+let currentBuildKey = "build1";
+let currentCategory = "siege";
+
+const CATEGORY_LABELS = { siege: "공성전", advent: "강림원정대", raid: "레이드" };
+
+// 1. 메인 페이지
+window.showPvePage = async function () {
+    const main = document.querySelector(".main");
+    if (!main) return;
+
+    const isAdmin = state.currentRole === "admin";
+
+    main.innerHTML = `
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div>
+                    <h2 style="margin:0;">🧩 PVE 공략</h2>
+                    <p style="color:#9ca3af; margin-top:4px;">스테이지를 선택하여 공략을 확인하세요</p>
+                </div>
+                ${isAdmin ? `
+                <button onclick="showAddStagePage()"
+                    style="background:#2563eb; color:white; border:none; border-radius:10px; padding:10px 16px; font-size:14px; font-weight:700; cursor:pointer;">
+                    + 스테이지 추가
+                </button>` : ""}
+            </div>
+
+            <!-- 검색 -->
+            <input type="text" id="pveSearch" placeholder="스테이지 이름 검색..."
+                style="width:100%; padding:14px; background:#374151; border:1px solid #4b5563; border-radius:12px; color:white; font-size:14px; margin-bottom:16px;"
+                oninput="filterPveList()" />
+
+            <!-- 카테고리 탭 -->
+            <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+                <button id="pveTab_siege"  onclick="switchPveCategory('siege')"  class="pve-tab-btn active-pve">🏯 공성전</button>
+                <button id="pveTab_advent" onclick="switchPveCategory('advent')" class="pve-tab-btn">⚔️ 강림원정대</button>
+                <button id="pveTab_raid"   onclick="switchPveCategory('raid')"   class="pve-tab-btn">🐉 레이드</button>
+            </div>
+
+            <!-- 스테이지 목록 -->
+            <div id="pveStageList" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:8px; margin-bottom:20px;">
+                <div style="color:#9ca3af; text-align:center; padding:20px; grid-column:1/-1;">불러오는 중...</div>
+            </div>
+
+            <!-- 상세 카드 -->
+            <div id="pveDetailCard" style="display:none; background:#1f2937; border:1px solid #374151; border-radius:14px; padding:20px;">
+
+                <!-- 헤더 -->
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+                    <div>
+                        <div id="pveCardTitle" style="font-size:18px; font-weight:900;"></div>
+                        <div id="pveCardCategory" style="font-size:12px; color:#9ca3af; margin-top:3px;"></div>
+                    </div>
+                    ${isAdmin ? `
+                    <button onclick="deleteCurrentStage()"
+                        style="background:#dc2626; color:white; border:none; border-radius:8px; padding:6px 12px; font-size:12px; cursor:pointer; font-weight:700;">
+                        🗑️ 삭제
+                    </button>` : ""}
+                </div>
+
+                <!-- 빌드 탭 -->
+                <div style="margin-bottom:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <div style="font-size:11px; color:#9ca3af; font-weight:700;">🛠️ 빌드</div>
+                        ${isAdmin ? `
+                        <div style="display:flex; gap:6px;">
+                            <button onclick="addPveBuild()"
+                                style="padding:5px 10px; border-radius:7px; border:1px dashed #3b82f6; background:rgba(59,130,246,0.1); color:#60a5fa; font-size:11px; font-weight:700; cursor:pointer;">
+                                + 추가
+                            </button>
+                            <button onclick="deleteCurrentBuild()"
+                                style="padding:5px 10px; border-radius:7px; border:1px solid rgba(220,38,38,0.4); background:rgba(220,38,38,0.1); color:#f87171; font-size:11px; font-weight:700; cursor:pointer;">
+                                🗑️ 삭제
+                            </button>
+                        </div>` : ""}
+                    </div>
+                    <div id="pveBuildTabs" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+                </div>
+
+                <!-- 보기 모드 -->
+                <div id="pveViewMode">
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        <div style="background:#374151; border-radius:10px; padding:14px;">
+                            <div style="font-size:11px; color:#9ca3af; font-weight:700; margin-bottom:6px;">⚔️ 덱 조합</div>
+                            <div id="viewPveDeck" style="font-size:14px; white-space:pre-wrap; line-height:1.6;">-</div>
+                        </div>
+                        <div style="background:#374151; border-radius:10px; padding:14px;">
+                            <div style="font-size:11px; color:#9ca3af; font-weight:700; margin-bottom:6px;">📜 스킬 순서</div>
+                            <div id="viewPveSkill" style="font-size:14px; white-space:pre-wrap; line-height:1.6;">-</div>
+                        </div>
+                        <div style="background:#374151; border-radius:10px; padding:14px;">
+                            <div style="font-size:11px; color:#9ca3af; font-weight:700; margin-bottom:6px;">🛡️ 장비 세팅</div>
+                            <div id="viewPveEquip" style="font-size:14px; white-space:pre-wrap; line-height:1.6;">-</div>
+                        </div>
+                        <div style="background:#374151; border-radius:10px; padding:14px;">
+                            <div style="font-size:11px; color:#9ca3af; font-weight:700; margin-bottom:6px;">📝 메모</div>
+                            <div id="viewPveNote" style="font-size:14px; white-space:pre-wrap; line-height:1.6;">-</div>
+                        </div>
+                    </div>
+                    ${isAdmin ? `
+                    <button onclick="enablePveEdit()"
+                        style="width:100%; margin-top:14px; padding:12px; background:#2563eb; color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
+                        ✏️ 수정하기
+                    </button>` : ""}
+                </div>
+
+                <!-- 수정 모드 (관리자) -->
+                <div id="pveEditMode" style="display:none;">
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <div>
+                            <div style="font-size:11px; color:#60a5fa; font-weight:700; margin-bottom:4px;">빌드 이름</div>
+                            <input id="editBuildName" type="text" placeholder="예: 딜링 빌드, 안정 빌드"
+                                style="width:100%; padding:10px; background:#374151; border:1px solid #4b5563; border-radius:8px; color:white; font-size:14px;" />
+                        </div>
+                        <div>
+                            <div style="font-size:11px; color:#60a5fa; font-weight:700; margin-bottom:4px;">⚔️ 덱 조합</div>
+                            <textarea id="editPveDeck" rows="3" placeholder="예: 라드그리드 트루드 엘리시아 ..."
+                                style="width:100%; padding:10px; background:#374151; border:1px solid #4b5563; border-radius:8px; color:white; font-size:14px; resize:vertical;"></textarea>
+                        </div>
+                        <div>
+                            <div style="font-size:11px; color:#60a5fa; font-weight:700; margin-bottom:4px;">📜 스킬 순서</div>
+                            <textarea id="editPveSkill" rows="4" placeholder="스킬 순서를 입력하세요"
+                                style="width:100%; padding:10px; background:#374151; border:1px solid #4b5563; border-radius:8px; color:white; font-size:14px; resize:vertical;"></textarea>
+                        </div>
+                        <div>
+                            <div style="font-size:11px; color:#60a5fa; font-weight:700; margin-bottom:4px;">🛡️ 장비 세팅</div>
+                            <textarea id="editPveEquip" rows="4" placeholder="장비 세팅을 입력하세요"
+                                style="width:100%; padding:10px; background:#374151; border:1px solid #4b5563; border-radius:8px; color:white; font-size:14px; resize:vertical;"></textarea>
+                        </div>
+                        <div>
+                            <div style="font-size:11px; color:#60a5fa; font-weight:700; margin-bottom:4px;">📝 메모</div>
+                            <textarea id="editPveNote" rows="3" placeholder="기타 메모나 주의사항"
+                                style="width:100%; padding:10px; background:#374151; border:1px solid #4b5563; border-radius:8px; color:white; font-size:14px; resize:vertical;"></textarea>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;">
+                        <button onclick="savePveData()"
+                            style="padding:12px; background:#2563eb; color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
+                            💾 저장
+                        </button>
+                        <button onclick="cancelPveEdit()"
+                            style="padding:12px; background:#374151; color:#9ca3af; border:1px solid #4b5563; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
+                            취소
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    `;
+
+    await loadPveData();
+    renderPveStageList();
+};
+
+// 2. 데이터 로드
+async function loadPveData() {
+    try {
+        const snap = await getDocs(collection(db, "pveStages"));
+        pveData = {};
+        snap.forEach(d => { pveData[d.id] = { ...d.data(), id: d.id }; });
+    } catch (e) {
+        console.error("PVE 데이터 로드 실패:", e);
+    }
+}
+
+// 3. 카테고리 전환
+window.switchPveCategory = function (cat) {
+    currentCategory = cat;
+    currentStageId = null;
+
+    ["siege", "advent", "raid"].forEach(c => {
+        const btn = document.getElementById(`pveTab_${c}`);
+        if (btn) btn.className = c === cat ? "pve-tab-btn active-pve" : "pve-tab-btn";
+    });
+
+    const card = document.getElementById("pveDetailCard");
+    if (card) card.style.display = "none";
+
+    renderPveStageList();
+};
+
+// 4. 스테이지 목록 렌더링
+function renderPveStageList(searchQuery = "") {
+    const list = document.getElementById("pveStageList");
+    if (!list) return;
+
+    const filtered = Object.entries(pveData).filter(([, s]) =>
+        s.category === currentCategory &&
+        (!searchQuery || s.name?.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+
+    if (filtered.length === 0) {
+        list.innerHTML = `<div style="color:#9ca3af; text-align:center; padding:20px; grid-column:1/-1;">${searchQuery ? "검색 결과 없음" : "등록된 스테이지가 없습니다"}</div>`;
+        return;
+    }
+
+    list.innerHTML = filtered.map(([id, s]) => `
+        <button onclick="selectPveStage('${id}')"
+            style="padding:14px 8px; background:${currentStageId === id ? "rgba(37,99,235,0.2)" : "#374151"};
+                   border:${currentStageId === id ? "1.5px solid #3b82f6" : "1px solid #4b5563"};
+                   border-radius:10px; color:white; font-size:13px; font-weight:700; cursor:pointer;
+                   text-align:center; line-height:1.4; transition:all 0.15s;">
+            ${s.name || "이름 없음"}
+        </button>
+    `).join("");
+}
+
+// 5. 검색 필터
+window.filterPveList = function () {
+    const q = document.getElementById("pveSearch")?.value || "";
+    renderPveStageList(q);
+};
+
+// 6. 스테이지 선택
+window.selectPveStage = async function (id) {
+    currentStageId = id;
+    currentBuildKey = "build1";
+    renderPveStageList(document.getElementById("pveSearch")?.value || "");
+
+    const stage = pveData[id];
+    if (!stage) return;
+
+    document.getElementById("pveCardTitle").textContent = stage.name || "이름 없음";
+    document.getElementById("pveCardCategory").textContent = CATEGORY_LABELS[stage.category] || "";
+    document.getElementById("pveDetailCard").style.display = "block";
+    document.getElementById("pveDetailCard").scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+    renderBuildTabs(stage.builds || {});
+    renderBuildContent(stage.builds || {}, currentBuildKey);
+    cancelPveEdit();
+};
+
+// 7. 빌드 탭 렌더링
+function renderBuildTabs(builds) {
+    const wrap = document.getElementById("pveBuildTabs");
+    if (!wrap) return;
+
+    const keys = Object.keys(builds).filter(k => k.startsWith("build")).sort();
+    if (keys.length === 0) {
+        wrap.innerHTML = `<span style="font-size:12px; color:#9ca3af;">빌드가 없습니다</span>`;
+        return;
+    }
+
+    wrap.innerHTML = keys.map(k => `
+        <button onclick="switchPveBuild('${k}')" id="pveBuildTab_${k}"
+            style="padding:8px 16px; border-radius:8px; border:1.5px solid ${k === currentBuildKey ? "#3b82f6" : "#4b5563"};
+                   background:${k === currentBuildKey ? "rgba(59,130,246,0.15)" : "#374151"};
+                   color:${k === currentBuildKey ? "#60a5fa" : "#9ca3af"};
+                   font-size:13px; font-weight:700; cursor:pointer;">
+            ${builds[k].buildName || k}
+        </button>
+    `).join("");
+}
+
+// 8. 빌드 전환
+window.switchPveBuild = function (key) {
+    currentBuildKey = key;
+    const stage = pveData[currentStageId];
+    if (!stage) return;
+    renderBuildTabs(stage.builds || {});
+    renderBuildContent(stage.builds || {}, key);
+    cancelPveEdit();
+};
+
+// 9. 빌드 내용 렌더링
+function renderBuildContent(builds, key) {
+    const b = builds[key] || {};
+    const set = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val || "-";
+    };
+    set("viewPveDeck", b.deck);
+    set("viewPveSkill", b.skill);
+    set("viewPveEquip", b.equip);
+    set("viewPveNote", b.note);
+}
+
+// 10. 수정 모드 열기/닫기
+window.enablePveEdit = function () {
+    const stage = pveData[currentStageId];
+    const b = stage?.builds?.[currentBuildKey] || {};
+
+    document.getElementById("editBuildName").value = b.buildName || "";
+    document.getElementById("editPveDeck").value = b.deck || "";
+    document.getElementById("editPveSkill").value = b.skill || "";
+    document.getElementById("editPveEquip").value = b.equip || "";
+    document.getElementById("editPveNote").value = b.note || "";
+
+    document.getElementById("pveViewMode").style.display = "none";
+    document.getElementById("pveEditMode").style.display = "block";
+};
+
+window.cancelPveEdit = function () {
+    document.getElementById("pveViewMode").style.display = "block";
+    document.getElementById("pveEditMode").style.display = "none";
+};
+
+// 11. 빌드 데이터 저장
+window.savePveData = async function () {
+    if (!currentStageId) return;
+
+    const buildName = document.getElementById("editBuildName").value.trim();
+    const deck  = document.getElementById("editPveDeck").value.trim();
+    const skill = document.getElementById("editPveSkill").value.trim();
+    const equip = document.getElementById("editPveEquip").value.trim();
+    const note  = document.getElementById("editPveNote").value.trim();
+
+    try {
+        const stageRef = doc(db, "pveStages", currentStageId);
+        const snap = await getDoc(stageRef);
+        if (!snap.exists()) return alert("스테이지를 찾을 수 없습니다.");
+
+        const data = snap.data();
+        const builds = data.builds || {};
+        builds[currentBuildKey] = {
+            buildName: buildName || builds[currentBuildKey]?.buildName || currentBuildKey,
+            deck, skill, equip, note
+        };
+
+        await updateDoc(stageRef, { builds });
+
+        pveData[currentStageId].builds = builds;
+        renderBuildTabs(builds);
+        renderBuildContent(builds, currentBuildKey);
+        cancelPveEdit();
+        alert("✅ 저장되었습니다!");
+    } catch (e) {
+        console.error(e);
+        alert("저장 실패: " + e.message);
+    }
+};
+
+// 12. 빌드 추가
+window.addPveBuild = async function () {
+    if (!currentStageId) return;
+
+    try {
+        const stageRef = doc(db, "pveStages", currentStageId);
+        const snap = await getDoc(stageRef);
+        if (!snap.exists()) return;
+
+        const data = snap.data();
+        const builds = data.builds || {};
+
+        let n = 1;
+        while (builds[`build${n}`]) n++;
+        const newKey = `build${n}`;
+        const newName = `빌드 ${n}`;
+
+        builds[newKey] = { buildName: newName, deck: "", skill: "", equip: "", note: "" };
+        await updateDoc(stageRef, { builds });
+
+        pveData[currentStageId].builds = builds;
+        currentBuildKey = newKey;
+        renderBuildTabs(builds);
+        renderBuildContent(builds, newKey);
+        enablePveEdit();
+    } catch (e) {
+        console.error(e);
+        alert("빌드 추가 실패: " + e.message);
+    }
+};
+
+// 13. 빌드 삭제
+window.deleteCurrentBuild = async function () {
+    if (!currentStageId) return;
+    if (currentBuildKey === "build1") return alert("빌드 1은 삭제할 수 없습니다.");
+    if (!confirm(`현재 빌드를 삭제할까요?`)) return;
+
+    try {
+        const stageRef = doc(db, "pveStages", currentStageId);
+        const snap = await getDoc(stageRef);
+        if (!snap.exists()) return;
+
+        const data = snap.data();
+        const builds = data.builds || {};
+        delete builds[currentBuildKey];
+
+        await updateDoc(stageRef, { builds });
+
+        pveData[currentStageId].builds = builds;
+        currentBuildKey = "build1";
+        cancelPveEdit();
+        renderBuildTabs(builds);
+        renderBuildContent(builds, currentBuildKey);
+    } catch (e) {
+        console.error(e);
+        alert("삭제 실패: " + e.message);
+    }
+};
+
+// 14. 스테이지 삭제
+window.deleteCurrentStage = async function () {
+    if (!currentStageId) return;
+    const stage = pveData[currentStageId];
+    if (!confirm(`"${stage?.name}" 스테이지를 삭제하시겠습니까?`)) return;
+
+    try {
+        await deleteDoc(doc(db, "pveStages", currentStageId));
+        delete pveData[currentStageId];
+        currentStageId = null;
+        document.getElementById("pveDetailCard").style.display = "none";
+        renderPveStageList(document.getElementById("pveSearch")?.value || "");
+        alert("삭제되었습니다.");
+    } catch (e) {
+        console.error(e);
+        alert("삭제 실패: " + e.message);
+    }
+};
+
+// 15. 스테이지 추가 페이지 (관리자)
+window.showAddStagePage = function () {
+    if (state.currentRole !== "admin") return alert("관리자만 추가할 수 있습니다.");
+
+    const main = document.querySelector(".main");
+    if (!main) return;
+
+    main.innerHTML = `
+        <div class="card">
+            <button onclick="showPvePage()" class="save-btn" style="background:#6b7280;">← 목록으로</button>
+            <h2 style="margin-top:15px;">🧩 스테이지 추가</h2>
+            <hr style="margin:20px 0; border-color:#374151;">
+
+            <label style="color:#9ca3af; font-size:14px;">카테고리</label>
+            <select id="newStageCategory"
+                style="width:100%; padding:12px; background:#374151; border:1px solid #4b5563; border-radius:10px; color:white; font-size:14px; margin-bottom:16px;">
+                <option value="siege">🏯 공성전</option>
+                <option value="advent">⚔️ 강림원정대</option>
+                <option value="raid">🐉 레이드</option>
+            </select>
+
+            <label style="color:#9ca3af; font-size:14px;">스테이지 이름</label>
+            <input type="text" id="newStageName" placeholder="예: 드래곤 1관문"
+                style="background:#374151; color:white; border:1px solid #4b5563;" />
+
+            <button onclick="saveNewStage()" class="save-btn"
+                style="width:100%; margin-top:20px; background:#2563eb; font-size:16px; padding:14px;">
+                💾 등록하기
+            </button>
+        </div>
+    `;
+};
+
+window.saveNewStage = async function () {
+    const name = document.getElementById("newStageName")?.value.trim();
+    const category = document.getElementById("newStageCategory")?.value;
+    if (!name) return alert("스테이지 이름을 입력하세요.");
+
+    try {
+        await addDoc(collection(db, "pveStages"), {
+            name,
+            category,
+            builds: {
+                build1: { buildName: "빌드 1", deck: "", skill: "", equip: "", note: "" }
+            },
+            createdAt: serverTimestamp()
+        });
+        alert("스테이지가 등록되었습니다! ✅");
+        currentCategory = category;
+        showPvePage();
+    } catch (e) {
+        console.error(e);
+        alert("등록 실패: " + e.message);
+    }
+};
+
+
+// ==========================================================
+// 진입점 (main)
+// ==========================================================
+window.loadNotices = loadNotices;
+
+await loadUsers();
+await loadNotices();
+
+</script>
 
 </body>
 </html>
